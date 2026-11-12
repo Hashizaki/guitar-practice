@@ -154,6 +154,7 @@ svg text{font-family:"Noto Sans JP",sans-serif}
 .rstats b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
 .rstats span{font-size:11px;color:var(--muted)}
 @media (min-width:760px){
+  .homecards{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:start;max-width:780px;width:100%;justify-self:center}
   .seg{grid-template-columns:repeat(4,1fr)}
   .tpanel{max-width:760px;width:100%;justify-self:center}
   .tapzone{height:200px;font-size:18px}
@@ -210,6 +211,20 @@ button:disabled{opacity:.4}
 @media (max-width:420px){ nav button{font-size:10px} .dia7 button b{font-size:11px} }
 @media (min-width:760px){ #learnHome,#lessonView{max-width:780px;width:100%;justify-self:center} .lesson p{font-size:16px} }
 
+/* ホーム：練習記録 */
+.homecards{display:block}
+.streak{font-size:14px;color:var(--accent)}
+.htoday{display:flex;align-items:baseline;gap:8px;margin-top:8px}
+.htoday b{font-size:40px;font-weight:900;font-variant-numeric:tabular-nums}
+.htoday span{color:var(--muted);font-size:14px}
+.htoday select{padding:4px 24px 4px 8px}
+.pbar div.full{background:var(--accent)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.cal span{text-align:center;font-size:10px;color:var(--muted)}
+.cal i{font-style:normal;text-align:center;font-size:11px;padding:5px 0;border-radius:6px;background:var(--panel2);color:var(--muted)}
+.cal i.l1{background:#3d5a45;color:var(--text)} .cal i.l2{background:#4f8a62;color:#fff} .cal i.l3{background:var(--ok);color:#10220f;font-weight:700}
+.cal i.lf{opacity:.3} .cal i.t{outline:2px solid var(--accent);outline-offset:-2px}
+
 /* ===== iPad / 横長画面 ===== */
 @media (min-width:760px){
   header{padding:22px 28px 8px;max-width:1040px} header h1{font-size:24px}
@@ -247,6 +262,21 @@ button:disabled{opacity:.4}
 
 <!-- ===== 学ぶ ===== -->
 <section class="tab" id="tab-learn">
+  <div class="homecards" id="homeCards">
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">今日の練習</h2><b id="hStreak" class="streak"></b></div>
+      <div class="htoday"><b id="hToday">0分</b><span>／ 目標
+        <select id="goalMin"><option value="5">5分</option><option value="10" selected>10分</option><option value="15">15分</option><option value="30">30分</option><option value="60">60分</option></select></span></div>
+      <div class="pbar"><div id="hFill" style="width:0"></div></div>
+      <div class="cal" id="hCal"></div>
+      <div class="muted" id="hTotal" style="margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <h2 id="menuHead">今日のメニュー</h2>
+      <p class="muted" style="margin:0">毎日少しずつが上達の近道。上から順にやってみましょう。</p>
+      <div id="menuList"></div>
+    </div>
+  </div>
   <div class="card wide" id="learnHome">
     <h2>📖 音楽理論をいちから学ぶ</h2>
     <p class="muted" style="margin:0">楽譜が読めなくても大丈夫。音の名前からコード進行・アドリブまで、音を鳴らしながら順番に学べます。1レッスン5分ほど。最後のクイズに3問正解すると完了です。</p>
@@ -514,6 +544,40 @@ const Store = {
   set(k, v){ try{ localStorage.setItem('gtr_'+k, JSON.stringify(v)); }catch(e){} }
 };
 
+/* ---------- 共通：練習記録 ---------- */
+// 記録はこの端末の localStorage にだけ保存され、どこにも送信されません
+const dayKey = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const Log = {
+  data: Store.get('log', {}), // {'2026-01-31': {sec, lesson, fret, ear, rhythm, chord}}
+  lastAct: 0,
+  today(){ const k = dayKey(); return this.data[k] || (this.data[k] = {sec:0}); },
+  get(what){ return (this.data[dayKey()] || {})[what] || 0; },
+  count(what, n=1){ const t = this.today(); t[what] = (t[what]||0) + n; this.save(); },
+  save(){
+    const keys = Object.keys(this.data).sort();
+    while(keys.length > 400) delete this.data[keys.shift()];
+    Store.set('log', this.data);
+    if(typeof renderHome === 'function') renderHome();
+  },
+  // 5秒ごと：画面が表示中で、操作してから1分以内か、メトロノーム・マイクが動いていれば練習時間に数える
+  tick(){
+    if(document.visibilityState !== 'visible') return;
+    const busy = M.running || Mic.users.size > 0 || (typeof Seq !== 'undefined' && Seq.btn);
+    if(!busy && Date.now() - this.lastAct > 60000) return;
+    const t = this.today(); t.sec += 5;
+    if(M.running && chordMode) t.chord = (t.chord||0) + 5;
+    this.save();
+  },
+  streak(){
+    let n = 0; const d = new Date();
+    if(!((this.data[dayKey(d)]||{}).sec >= 60)) d.setDate(d.getDate()-1); // 今日まだなら昨日から数える
+    while((this.data[dayKey(d)]||{}).sec >= 60){ n++; d.setDate(d.getDate()-1); }
+    return n;
+  }
+};
+['pointerdown','keydown'].forEach(ev=> document.addEventListener(ev, ()=>{ Log.lastAct = Date.now(); }, true));
+setInterval(()=>Log.tick(), 5000);
+
 /* ---------- 共通：画面スリープ防止（Wake Lock） ---------- */
 const Wake = { lock:null, want:new Set() };
 async function wakeUpdate(){
@@ -575,6 +639,7 @@ function gotoTab(name){
   document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('active', s.id==='tab-'+name));
   window.scrollTo(0,0);
   Store.set('tab', name);
+  if(name === 'learn' && typeof renderHome === 'function') renderHome();
 }
 document.querySelectorAll('#nav button').forEach(b=> b.onclick = ()=> gotoTab(b.dataset.tab));
 
@@ -1009,7 +1074,7 @@ function newQuestion(){
   }
 }
 function scoreResult(ok){
-  Q.total++;
+  Q.total++; Log.count('fret');
   if(ok){
     Q.correct++; Q.streak++;
     if(Q.streak > Q.best){ Q.best = Q.streak; Store.set('best', Q.best); }
@@ -1145,7 +1210,7 @@ function makeQuiz(o){
     if(!st.q){ next(); return; }
     if(st.locked) return;
     const ok = btn.dataset.v === String(st.q.answer);
-    st.t++; st.locked = true;
+    st.t++; st.locked = true; if(o.log) Log.count(o.log);
     if(ok){ st.c++; st.s++; if(st.s > st.b){ st.b = st.s; Store.set('best_'+o.key, st.b); } btn.className = 'ok'; }
     else { st.s = 0; btn.className = 'ng';
       $(o.ans).querySelectorAll('button').forEach(b=>{ if(b.dataset.v===String(st.q.answer)) b.className='ok'; }); }
@@ -1170,7 +1235,7 @@ const INTERVALS = [
 ];
 const IV_LEVEL = { basic:[2,4,5,7,12], mid:[2,3,4,5,7,9,10,12], all:[1,2,3,4,5,6,7,8,9,10,11,12] };
 const ivQuiz = makeQuiz({
-  key:'iv', delay:[2300, 3300], score:'ivScore', text:'ivText', ans:'ivAns',
+  key:'iv', log:'ear', delay:[2300, 3300], score:'ivScore', text:'ivText', ans:'ivAns',
   choices: ()=> INTERVALS.filter(x=> IV_LEVEL[$('ivLevel').value].includes(x.v)),
   make(prev){
     const pool = IV_LEVEL[$('ivLevel').value];
@@ -1205,7 +1270,7 @@ const CTYPES = [
   {v:'dim', label:'ディミニッシュ', sym:'dim', iv:[0,3,6], lv:3, desc:'不安・緊張'}
 ];
 const ceQuiz = makeQuiz({
-  key:'ce', delay:[2500, 3500], score:'ceScore', text:'ceText', ans:'ceAns',
+  key:'ce', log:'ear', delay:[2500, 3500], score:'ceScore', text:'ceText', ans:'ceAns',
   choices: ()=> CTYPES.filter(c=> c.lv <= +$('ceLevel').value),
   make(){
     const pool = CTYPES.filter(c=> c.lv <= +$('ceLevel').value), c = pick(pool), root = 40 + rnd(12);
@@ -1309,6 +1374,7 @@ function rhythmTap(e){
   if(!best || Math.abs(best.d) > g/2) return;
   const ms = Math.round(best.d * 1000);
   R.offs.push(ms); if(R.offs.length > 200) R.offs.shift();
+  Log.count('rhythm');
   // 表示
   const range = Math.min(150, g*500); // ルーラーの端 = ±range ms
   const tk = document.createElement('div'); tk.className = 'tk';
@@ -1818,6 +1884,47 @@ const LESSONS = [
 }
 ];
 
+// --- ホーム：練習記録と今日のメニュー ---
+const fmtMin = sec => sec >= 3600 ? `${Math.floor(sec/3600)}時間${Math.floor(sec%3600/60)}分` : `${Math.floor(sec/60)}分`;
+
+const MENU = [
+  { id:'lesson', ic:'📖', need:1, unit:'回', title(){ const i = LESSONS.findIndex(l=>!Learn.done.has(l.id)); return i<0 ? 'レッスンを復習する' : `レッスン ${i+1}：${LESSONS[i].title}`; },
+    go(){ const i = LESSONS.findIndex(l=>!Learn.done.has(l.id)); openLesson(i<0 ? rnd(LESSONS.length) : i); } },
+  { id:'fret', ic:'🎯', need:10, unit:'問', title:()=> '指板クイズ', go(){ gotoTab('fret'); } },
+  { id:'ear', ic:'👂', need:10, unit:'問', title:()=> '耳トレ（音程・コード当て）', go(){ gotoTab('train'); setTrainMode(Store.get('trainMode','interval')==='chordear' ? 'chordear' : 'interval'); } },
+  { id:'rhythm', ic:'🥁', need:30, unit:'タップ', title:()=> 'リズム練習', go(){ gotoTab('train'); setTrainMode('rhythm'); } },
+  { id:'chord', ic:'🎼', need:120, unit:'秒', title:()=> 'コードチェンジ練習', go(){ gotoTab('chord'); } }
+];
+function renderHome(){
+  if(!$('tab-learn').classList.contains('active') || $('learnHome').hidden) return;
+  const sec = Log.get('sec'), goal = +$('goalMin').value * 60, st = Log.streak();
+  $('hToday').textContent = fmtMin(sec);
+  $('hFill').style.width = Math.min(100, sec / goal * 100) + '%';
+  $('hFill').classList.toggle('full', sec >= goal);
+  $('hStreak').textContent = st > 0 ? `🔥 ${st}日連続` : '今日から始めよう';
+  const days = Object.values(Log.data).filter(d=>d.sec >= 60);
+  $('hTotal').textContent = `これまでの合計 ${fmtMin(Object.values(Log.data).reduce((a,d)=>a+(d.sec||0),0))} ・ 練習した日 ${days.length}日`;
+  // 直近5週間のカレンダー（月曜はじまり、今日が最後の週）
+  const today = new Date(), start = new Date(today); start.setDate(today.getDate() - ((today.getDay()+6)%7) - 28);
+  let cal = ['月','火','水','木','金','土','日'].map(w=>`<span>${w}</span>`).join('');
+  for(let i=0;i<35;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i);
+    const s = (Log.data[dayKey(d)]||{}).sec || 0, fut = d > today, isT = dayKey(d) === dayKey(today);
+    const lv = fut ? 'f' : s >= goal ? 3 : s >= goal/2 ? 2 : s >= 60 ? 1 : 0;
+    cal += `<i class="l${lv}${isT?' t':''}" title="${dayKey(d)} ${fmtMin(s)}">${d.getDate()}</i>`;
+  }
+  $('hCal').innerHTML = cal;
+  // 今日のメニュー
+  const done = MENU.filter(m=>Log.get(m.id) >= m.need).length;
+  $('menuHead').textContent = done === MENU.length ? '今日のメニュー ✓ 全部できました！' : `今日のメニュー（${done} / ${MENU.length}）`;
+  const key = MENU.map(m=>m.title()+Math.min(Log.get(m.id), m.need)).join('|');
+  if($('menuList').dataset.key === key) return; // 変化がなければ作り直さない
+  $('menuList').dataset.key = key;
+  $('menuList').innerHTML = MENU.map((m,i)=>{ const v = Math.min(Log.get(m.id), m.need), ok = v >= m.need;
+    return `<button class="litem${ok?' done':''}" data-i="${i}"><span class="num">${ok?'✓':m.ic}</span><span class="tt"><b>${m.title()}</b><small>${ok ? '完了' : `${v} / ${m.need} ${m.unit}`}</small></span></button>`; }).join('');
+  $('menuList').querySelectorAll('button').forEach(b=> b.onclick = ()=> MENU[+b.dataset.i].go());
+}
+
 // --- 画面 ---
 const Learn = { done:new Set(Store.get('lessonsDone', [])), cur:-1 };
 function gotoTrain(mode){ gotoTab('train'); setTrainMode(mode); }
@@ -1830,7 +1937,7 @@ function renderLessonList(){
     <span class="num">${Learn.done.has(l.id) ? '✓' : i+1}</span><span class="tt"><b>${l.title}</b><small>${l.sub}</small></span>${i===next?'<span class="go">つぎはここ</span>':''}</button>`).join('');
   $('lessonList').querySelectorAll('button').forEach(b=> b.onclick = ()=> openLesson(+b.dataset.i));
 }
-function closeLesson(){ Seq.stop(); Learn.cur = -1; $('lessonView').hidden = true; $('lessonView').innerHTML = ''; $('learnHome').hidden = false; renderLessonList(); window.scrollTo(0,0); }
+function closeLesson(){ Seq.stop(); Learn.cur = -1; $('lessonView').hidden = true; $('lessonView').innerHTML = ''; $('learnHome').hidden = false; $('homeCards').hidden = false; renderLessonList(); renderHome(); window.scrollTo(0,0); }
 function openLesson(i){
   Seq.stop(); Learn.cur = i;
   const L = LESSONS[i], v = $('lessonView');
@@ -1838,7 +1945,7 @@ function openLesson(i){
     <h2 class="ltitle">${L.title}</h2><div class="lesson">${L.body}</div>
     <div class="lquiz"><h3>理解度チェック <span id="lqDots"></span></h3><div class="qtext" id="lqQ"></div><div class="answers two" id="lqA"></div><div class="lwhy" id="lqWhy"></div></div>
     <div class="row" style="margin-top:14px"><span class="grow"></span><button class="primary" id="lNext" hidden></button></div>`;
-  $('learnHome').hidden = true; v.hidden = false; window.scrollTo(0,0);
+  $('learnHome').hidden = true; $('homeCards').hidden = true; v.hidden = false; window.scrollTo(0,0);
   $('lBack').onclick = closeLesson;
   v.querySelectorAll('[data-go]').forEach(b=> b.onclick = ()=>{ const g = b.dataset.go;
     if(g==='fretquiz'){ gotoTab('fret'); } else gotoTrain(g); });
@@ -1847,7 +1954,7 @@ function openLesson(i){
   let ok = 0, pool = [], locked = false;
   const dots = ()=> $('lqDots').innerHTML = [0,1,2].map(k=>`<i class="${k<ok?'on':''}"></i>`).join('');
   const finish = ()=>{
-    Learn.done.add(L.id); Store.set('lessonsDone', [...Learn.done]);
+    Learn.done.add(L.id); Store.set('lessonsDone', [...Learn.done]); Log.count('lesson');
     $('lqQ').textContent = '🎉 レッスン完了！'; $('lqA').innerHTML = ''; $('lqWhy').textContent = '';
     const nb = $('lNext'); nb.hidden = false;
     if(i+1 < LESSONS.length){ nb.textContent = `次のレッスン：${LESSONS[i+1].title} →`; nb.onclick = ()=>openLesson(i+1); }
@@ -1870,7 +1977,9 @@ function openLesson(i){
   };
   dots(); ask();
 }
-renderLessonList();
+persist('goalMin');
+$('goalMin').addEventListener('change', ()=>renderHome());
+renderLessonList(); renderHome();
 
 /* ---------- 前回開いていたタブを復元（初回は「学ぶ」から） ---------- */
 { const t = Store.get('tab', 'learn'); gotoTab(document.getElementById('tab-'+t) ? t : 'learn'); }

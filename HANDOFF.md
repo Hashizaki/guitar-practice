@@ -17,6 +17,8 @@ It needs no build step, server, or external audio files. Opening it in a browser
 
 | Tab | Feature | Notes |
 |---|---|---|
+| Learn (home) | Practice log | Today's minutes vs. a daily goal, streak, 5-week calendar, total time. Stored only on the device |
+| | Today's menu | 5 small daily tasks (lesson, fretboard quiz ×10, ear training ×10, rhythm ×30 taps, chord changes 2 min) with automatic progress |
 | Learn (theory lessons) | 10 step-by-step lessons | Note names → fretboard → rhythm/strumming → major scale → intervals → chord construction → diatonic chords → chord progressions → minor keys/relative keys → pentatonic improvisation. Each has interactive sound demos and a quiz (3 correct answers completes it); progress is saved |
 | Metronome | BPM 30–240, ±1/±5 buttons, slider | |
 | | Time signature (2/3/4/6), accent on beat 1 | |
@@ -100,6 +102,13 @@ It needs no build step, server, or external audio files. Opening it in a browser
   fingering from `CHORDS` when one exists, otherwise stacks the chord tones.
 - `strum(frets, t, up, vol)` now supports scheduled time and up-strokes.
 - Completed lesson ids are stored in `gtr_lessonsDone`; the last open tab in `gtr_tab` (first visit opens Learn).
+
+### Practice log
+- `Log` (defined right after `Store`): `Log.data[YYYY-MM-DD] = {sec, lesson, fret, ear, rhythm, chord}`, saved as `gtr_log`
+  (last 400 days). `Log.tick()` runs every 5 s and adds time while the page is visible and either the user
+  interacted within the last minute or the metronome / mic / a lesson demo is running.
+- Features report activity with `Log.count(kind)`; `MENU` (in the learn section) turns the counters into
+  the daily checklist, and `renderHome()` draws the card, calendar and menu.
 
 ### Data
 - `CHORDS`: frets listed from the 6th string to the 1st, with -1 meaning muted. Barre chords are written as `{f:[...], barre:[fret, starting string index]}`.
