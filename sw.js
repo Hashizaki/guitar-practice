@@ -1,6 +1,6 @@
 // オフライン対応用 Service Worker
 // アプリを更新したら VERSION を上げると古いキャッシュが消えます。
-const VERSION = 'gtr-v2';
+const VERSION = 'gtr-v3';
 const CORE = ['./', 'index.html', 'manifest.webmanifest',
   'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
