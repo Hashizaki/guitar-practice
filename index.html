@@ -45,6 +45,7 @@ button.primary.on{background:var(--accent2);border-color:var(--accent2);color:#f
 .grow{flex:1}
 /* iOS は 16px 未満の入力欄にフォーカスすると自動ズームするので 16px に */
 select{font-family:inherit;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:16px;-webkit-appearance:none;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 15px) 55%,calc(100% - 10px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:26px}
+select{max-width:100%;min-width:0;text-overflow:ellipsis}
 input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
 input[type=range]{width:100%;accent-color:var(--accent)}
 label.chk{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
@@ -158,6 +159,57 @@ svg text{font-family:"Noto Sans JP",sans-serif}
   .tapzone{height:200px;font-size:18px}
 }
 
+
+/* 学ぶ（レッスン） */
+.pbar{height:8px;border-radius:4px;background:var(--panel2);overflow:hidden;margin:10px 0 4px}
+.pbar div{height:100%;background:var(--ok);border-radius:4px;transition:width .3s}
+.litem{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:8px;padding:12px}
+.litem .num{flex:none;width:32px;height:32px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.litem.done .num{background:var(--ok);border-color:var(--ok);color:#10220f}
+.litem.next{border-color:var(--accent)}
+.litem .tt{flex:1;min-width:0} .litem .tt b{display:block;font-size:15px} .litem .tt small{color:var(--muted);font-size:12px}
+.litem .go{flex:none;font-size:11px;font-weight:700;color:#2a1a08;background:var(--accent);border-radius:999px;padding:3px 8px}
+.ltitle{font-size:20px!important;margin:14px 0 6px!important}
+.lesson p{font-size:15px;line-height:1.85;margin:10px 0}
+.lesson b{color:#ffd9a0}
+.lesson .row{margin:10px 0}
+.lesson .tbl{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:6px;margin:10px 0}
+.lesson .tbl div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 4px;text-align:center;font-size:12px;color:var(--muted);line-height:1.5}
+.lesson .tbl b{display:block;font-size:16px;color:var(--text)}
+.lesson .tbl.fn .T{border-color:var(--ok)} .lesson .tbl.fn .S{border-color:#5aa8e0} .lesson .tbl.fn .D{border-color:var(--accent2)}
+.lesson .point{border-left:4px solid var(--accent);background:var(--panel2);border-radius:0 10px 10px 0;padding:10px 12px;font-size:14px;line-height:1.7;margin:14px 0}
+.lesson .formula{text-align:center;font-size:20px;font-weight:900;letter-spacing:.08em;color:var(--accent);background:var(--panel2);border-radius:12px;padding:12px 4px;margin:10px 0}
+.lesson .readout{text-align:center;font-size:16px;font-weight:700;min-height:28px;margin:8px 0;line-height:1.7}
+.lesson .readout small{font-weight:400;color:var(--muted);font-size:11px;margin-left:2px}
+.kb{width:100%;display:block;margin:8px 0;max-width:640px;margin-left:auto;margin-right:auto;touch-action:manipulation}
+.steps{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:2px;margin:8px 0}
+.steps b{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:4px 7px;font-size:14px;color:var(--text)}
+.steps b.cur{background:var(--ok);color:#10220f;border-color:var(--ok)}
+.steps i{font-style:normal;font-size:11px;color:var(--accent);padding:0 1px}
+.strokes{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:10px 0}
+.strokes div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;text-align:center;padding:8px 0}
+.strokes div b{display:block;font-size:24px;line-height:1.1;color:var(--accent)}
+.strokes div.rest b{color:var(--line)}
+.strokes div span{font-size:11px;color:var(--muted)}
+.strokes div.cur{border-color:var(--ok);background:#2c3a2c}
+.dia7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:10px 0}
+.dia7 button{padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:2px;border-width:2px}
+.dia7 button small{font-size:11px;color:var(--muted)} .dia7 button b{font-size:13px;color:var(--text)}
+.dia7 .T{border-color:var(--ok)} .dia7 .S{border-color:#5aa8e0} .dia7 .D{border-color:var(--accent2)}
+.dia7 .cur{background:#4a3520}
+.progrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.progrow div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;text-align:center;padding:8px 2px}
+.progrow div small{display:block;font-size:11px;color:var(--muted)} .progrow div b{font-size:18px;color:var(--text)}
+.progrow div.cur{border-color:var(--accent);background:#4a3520}
+.lquiz{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:18px;background:var(--bg)}
+.lquiz h3{margin:0 0 8px;font-size:15px;color:var(--accent);display:flex;align-items:center;gap:8px}
+#lqDots{display:inline-flex;gap:5px} #lqDots i{width:12px;height:12px;border-radius:50%;border:2px solid var(--line)} #lqDots i.on{background:var(--ok);border-color:var(--ok)}
+.answers.two{grid-template-columns:repeat(2,1fr)} .answers.two button{font-size:14px;padding:12px 6px;line-height:1.4}
+.lwhy{font-size:13px;color:var(--muted);line-height:1.7;min-height:22px;margin-top:8px;text-align:center}
+button:disabled{opacity:.4}
+@media (max-width:420px){ nav button{font-size:10px} .dia7 button b{font-size:11px} }
+@media (min-width:760px){ #learnHome,#lessonView{max-width:780px;width:100%;justify-self:center} .lesson p{font-size:16px} }
+
 /* ===== iPad / 横長画面 ===== */
 @media (min-width:760px){
   header{padding:22px 28px 8px;max-width:1040px} header h1{font-size:24px}
@@ -186,15 +238,27 @@ svg text{font-family:"Noto Sans JP",sans-serif}
 </style>
 </head>
 <body>
-<header><h1>🎸 ギター練習</h1><span>メトロノーム・チューナー・コード・指板・耳トレ</span></header>
+<header><h1>🎸 ギター練習</h1><span>理論レッスン・メトロノーム・チューナー・コード・指板・耳トレ</span></header>
 <main>
 <div class="card a2hs" id="a2hs" hidden>
   <p class="muted">📱 共有ボタン <b>⬆︎</b> →「<b>ホーム画面に追加</b>」でアプリのように全画面で使えます。オフラインでも動きます。</p>
   <button id="a2hsClose">閉じる</button>
 </div>
 
+<!-- ===== 学ぶ ===== -->
+<section class="tab" id="tab-learn">
+  <div class="card wide" id="learnHome">
+    <h2>📖 音楽理論をいちから学ぶ</h2>
+    <p class="muted" style="margin:0">楽譜が読めなくても大丈夫。音の名前からコード進行・アドリブまで、音を鳴らしながら順番に学べます。1レッスン5分ほど。最後のクイズに3問正解すると完了です。</p>
+    <div class="pbar"><div id="lpFill" style="width:0"></div></div>
+    <div class="muted" id="lpText"></div>
+    <div id="lessonList"></div>
+  </div>
+  <div class="card wide" id="lessonView" hidden></div>
+</section>
+
 <!-- ===== メトロノーム ===== -->
-<section class="tab active" id="tab-metro">
+<section class="tab" id="tab-metro">
   <div class="card">
     <div class="bpm"><span id="bpmVal">90</span><small>BPM</small></div>
     <div class="dots" id="dots"></div>
@@ -402,7 +466,8 @@ svg text{font-family:"Noto Sans JP",sans-serif}
 </main>
 
 <nav id="nav">
-  <button class="active" data-tab="metro"><span class="ic">⏱</span>メトロノーム</button>
+  <button data-tab="learn"><span class="ic">📖</span>学ぶ</button>
+  <button data-tab="metro"><span class="ic">⏱</span>メトロノーム</button>
   <button data-tab="tuner"><span class="ic">🎚</span>チューナー</button>
   <button data-tab="chord"><span class="ic">🎼</span>コード</button>
   <button data-tab="fret"><span class="ic">🎯</span>指板</button>
@@ -495,20 +560,23 @@ function pluck(freq, t, vol=0.45){
   s.connect(g).connect(c.destination);
   s.start(t); s.stop(t+2.2);
 }
-function strum(frets){
-  const t0 = ac().currentTime + 0.01;
-  let k = 0;
-  frets.forEach((f,i)=>{ if(f>=0){ pluck(midiFreq(OPEN[i]+f), t0 + k*0.025, 0.28); k++; } });
+// t: 鳴らす時刻（省略で今すぐ）、up: アップストローク（高い弦から4本）
+function strum(frets, t, up, vol=0.28){
+  const t0 = t ?? ac().currentTime + 0.01;
+  let ms = frets.map((f,i)=> f>=0 ? OPEN[i]+f : -1).filter(m=>m>=0);
+  if(up) ms = ms.reverse().slice(0,4);
+  ms.forEach((m,k)=> pluck(midiFreq(m), t0 + k*(up ? 0.012 : 0.025), up ? vol*0.8 : vol));
 }
 
 /* ---------- タブ ---------- */
-document.querySelectorAll('#nav button').forEach(b=>{
-  b.onclick = ()=>{
-    document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active', x===b));
-    document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('active', s.id==='tab-'+b.dataset.tab));
-    window.scrollTo(0,0);
-  };
-});
+function gotoTab(name){
+  if(typeof Seq !== 'undefined') Seq.stop(); // レッスンの再生を止める
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active', x.dataset.tab===name));
+  document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('active', s.id==='tab-'+name));
+  window.scrollTo(0,0);
+  Store.set('tab', name);
+}
+document.querySelectorAll('#nav button').forEach(b=> b.onclick = ()=> gotoTab(b.dataset.tab));
 
 /* ---------- メトロノーム ---------- */
 const M = { bpm:90, beats:4, accent:true, running:false, next:0, beat:0, count:0, timer:null, listeners:[], times:[], mute:null };
@@ -1265,6 +1333,547 @@ document.addEventListener('keydown', e=>{
   if(e.code !== 'Space' || e.repeat || !$('tab-train').classList.contains('active') || $('tp-rhythm').hidden) return;
   e.preventDefault(); rhythmTap(e);
 });
+
+/* ---------- 学ぶ（音楽理論レッスン） ---------- */
+// --- 理論の道具：正しい音名のつづり（F メジャーなら A♯ ではなく B♭） ---
+const LET = ['C','D','E','F','G','A','B'], LPC = [0,2,4,5,7,9,11];
+const LET_JP = ['ド','レ','ミ','ファ','ソ','ラ','シ'];
+const ACC = {'-2':'𝄫','-1':'♭','0':'','1':'♯','2':'𝄪'};
+const KEYS = ['C','G','D','A','E','F','B♭','E♭','A♭','B','F♯','D♭'];
+const EASY_KEYS = ['C','G','D','A','E','F'];
+function parseNote(n){ const l = LET.indexOf(n[0]), a = n.includes('♯') ? 1 : n.includes('♭') ? -1 : 0; return { l, pc:(LPC[l]+a+12)%12 }; }
+// root から semi 半音上の音を「step 度ぶん先の文字」で書く（step: 0=同じ文字, 2=3度…）
+function spell(root, semi, step){
+  const r = parseNote(root), l = (r.l + step) % 7; let d = ((r.pc + semi) % 12 - LPC[l] + 12) % 12; if(d > 6) d -= 12;
+  return LET[l] + ACC[d];
+}
+const withJP = n => `${n}（${LET_JP[LET.indexOf(n[0])]}${n.slice(1)}）`;
+const T_SCALE = {
+  major:{ jp:'メジャースケール', iv:[0,2,4,5,7,9,11], st:[0,1,2,3,4,5,6] },
+  minor:{ jp:'ナチュラルマイナースケール', iv:[0,2,3,5,7,8,10], st:[0,1,2,3,4,5,6] },
+  minpenta:{ jp:'マイナーペンタトニック', iv:[0,3,5,7,10], st:[0,2,3,4,6] },
+  majpenta:{ jp:'メジャーペンタトニック', iv:[0,2,4,7,9], st:[0,1,2,4,5] }
+};
+const scaleNotes = (root, k) => T_SCALE[k].iv.map((s,i)=> spell(root, s, T_SCALE[k].st[i]));
+const T_CHORD = {
+  M:{ sym:'', jp:'メジャー', iv:[0,4,7], st:[0,2,4], f:'ルート ＋ 長3度 ＋ 完全5度' },
+  m:{ sym:'m', jp:'マイナー', iv:[0,3,7], st:[0,2,4], f:'ルート ＋ 短3度 ＋ 完全5度' },
+  dim:{ sym:'dim', jp:'ディミニッシュ', iv:[0,3,6], st:[0,2,4], f:'ルート ＋ 短3度 ＋ 減5度' },
+  '7':{ sym:'7', jp:'セブンス', iv:[0,4,7,10], st:[0,2,4,6], f:'メジャー ＋ 短7度' },
+  M7:{ sym:'maj7', jp:'メジャーセブンス', iv:[0,4,7,11], st:[0,2,4,6], f:'メジャー ＋ 長7度' },
+  m7:{ sym:'m7', jp:'マイナーセブンス', iv:[0,3,7,10], st:[0,2,4,6], f:'マイナー ＋ 短7度' }
+};
+const chordNotes = (root, ty) => T_CHORD[ty].iv.map((s,i)=> spell(root, s, T_CHORD[ty].st[i]));
+const T_IV = [null,['短2度',1],['長2度',1],['短3度',2],['長3度',2],['完全4度',3],['増4度',3],['完全5度',4],['短6度',5],['長6度',5],['短7度',6],['長7度',6],['オクターブ',0]];
+const ROMAN = ['I','ii','iii','IV','V','vi','vii°'], DQ = ['M','m','m','M','M','m','dim'], DFN = ['T','S','T','S','D','T','D'];
+const diatonic = key => scaleNotes(key,'major').map((n,i)=>({ root:n, ty:DQ[i], name:n+T_CHORD[DQ[i]].sym, roman:ROMAN[i], fn:DFN[i] }));
+const rootMidi = (root, base=48) => base + parseNote(root).pc;
+// コードを鳴らす：ギターのフォームがあればそれで、なければ構成音を重ねる
+function playChord(root, ty, t, up){
+  const name = root + T_CHORD[ty].sym;
+  if(CHORDS[name]){ strum(chordFrets(name), t, up); return; }
+  const c = ac(), iv = T_CHORD[ty].iv, r = 40 + ((parseNote(root).pc - 4 + 12) % 12);
+  const ns = [r, ...(iv.includes(7) ? [r+7] : []), ...iv.map(i=>r+12+i), r+24].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+  (up ? ns.reverse().slice(0,4) : ns).forEach((m,i)=> pluck(midiFreq(m), (t ?? c.currentTime+0.01) + i*0.025, 0.28));
+}
+
+// --- 再生の共通部品（一度に1つだけ鳴らす。ボタンをもう一度押すと停止） ---
+const Seq = { timers:[], btn:null, label:'', onStop:null,
+  stop(){
+    this.timers.forEach(clearTimeout); this.timers = [];
+    if(this.btn){ this.btn.textContent = this.label; this.btn.classList.remove('on'); this.btn = null; }
+    if(this.onStop){ const f = this.onStop; this.onStop = null; f(); }
+  },
+  // n ステップを len 秒ごとに。fn(i, t) で音を予約、ui(i) で表示を更新
+  play(btn, n, len, fn, ui, loop, onStop){
+    if(this.btn === btn){ this.stop(); return; }
+    this.stop(); this.btn = btn; this.label = btn.textContent; btn.textContent = '■ 停止'; btn.classList.add('on'); this.onStop = onStop || null;
+    const c = ac(), t0 = c.currentTime + 0.12; let k = 0;
+    const step = ()=>{
+      if(this.timers.length > 60) this.timers.splice(0, 40);
+      const i = k % n, t = t0 + k*len; fn(i, t);
+      if(ui) this.timers.push(setTimeout(()=>ui(i), Math.max(0, (t - c.currentTime)*1000)));
+      k++;
+      if(k < n || loop) this.timers.push(setTimeout(step, Math.max(0, (t0 + k*len - c.currentTime - 0.1)*1000)));
+      else this.timers.push(setTimeout(()=>this.stop(), (t + len + 0.3 - c.currentTime)*1000));
+    };
+    step();
+  }
+};
+
+// --- 鍵盤（C3〜C5）。marks: {midi: {fill, label}} ---
+function kbDraw(el, marks={}){
+  let s = '', bl = '', w = 0;
+  for(let m=48; m<=72; m++){
+    const pc = m % 12, mk = marks[m];
+    if(LPC.includes(pc)){
+      s += `<rect data-m="${m}" x="${w*20}" y="0" width="20" height="90" rx="3" fill="${mk ? mk.fill : '#f3e9dc'}" stroke="#1b1612" stroke-width="1.5"/>`;
+      if(mk && mk.label) s += `<text x="${w*20+10}" y="80" text-anchor="middle" font-size="${mk.label.length>2?7.5:9.5}" font-weight="700" fill="#2a1a08" pointer-events="none">${mk.label}</text>`;
+      else if(pc===0) s += `<text x="${w*20+10}" y="82" text-anchor="middle" font-size="8" fill="#9b8a74" pointer-events="none">C</text>`;
+      w++;
+    } else {
+      const x = w*20 - 6.5;
+      bl += `<rect data-m="${m}" x="${x}" y="0" width="13" height="56" rx="2" fill="${mk ? mk.fill : '#2a211a'}" stroke="#1b1612" stroke-width="1"/>`;
+      if(mk && mk.label) bl += `<text x="${x+6.5}" y="48" text-anchor="middle" font-size="6.5" font-weight="700" fill="#2a1a08" pointer-events="none">${mk.label}</text>`;
+    }
+  }
+  el.innerHTML = `<svg class="kb" viewBox="0 0 300 90">${s}${bl}</svg>`;
+}
+function kbOnTap(el, fn){
+  el.addEventListener('pointerdown', e=>{ const k = e.target.closest('[data-m]'); if(!k) return; e.preventDefault(); fn(+k.dataset.m); });
+}
+const C_ROOT = '#e2683c', C_TONE = '#f0a33a', C_HIT = '#6cc48a';
+const keyOpts = (list=KEYS, sel='C') => list.map(k=>`<option${k===sel?' selected':''}>${k}</option>`).join('');
+const shuffle = a => { a = [...a]; for(let i=a.length-1;i>0;i--){ const j = rnd(i+1); [a[i],a[j]] = [a[j],a[i]]; } return a; };
+// 問題を作る：正解＋ダミー（重複は除く）をシャッフル
+function mkQ(q, ok, wrongs, why){
+  const opts = shuffle([ok, ...[...new Set(wrongs)].filter(w=>w!==ok).slice(0,3)]);
+  return { q, opts, a: opts.indexOf(ok), why };
+}
+
+// --- レッスン定義 ---
+const LESSONS = [
+{ id:'notes', title:'音の名前', sub:'ドレミと CDE、♯と♭',
+  body:`
+  <p>音楽で使う音は、実は<b>12種類</b>しかありません。そのうち7つに名前がついています。</p>
+  <div class="tbl"><div><b>C</b>ド</div><div><b>D</b>レ</div><div><b>E</b>ミ</div><div><b>F</b>ファ</div><div><b>G</b>ソ</div><div><b>A</b>ラ</div><div><b>B</b>シ</div></div>
+  <p>ギターのコード名（C、G、Am…）はこの<b>英語の音名</b>で書くので、まずは「C＝ド」から覚えましょう。</p>
+  <p>下の鍵盤をタップしてみてください。白い鍵盤が上の7つ、黒い鍵盤が残りの5つです。</p>
+  <div data-w="kb"></div>
+  <div class="readout" data-w="out">鍵盤をタップ</div>
+  <div class="row"><button data-w="doremi">▶ ドレミファソラシド</button><button data-w="chroma">▶ 12音ぜんぶ</button></div>
+  <p>となり合う鍵盤（黒も含む）の距離を<b>半音</b>、半音2つ分を<b>全音</b>といいます。<b>E–F</b> と <b>B–C</b> の間には黒い鍵盤がないので、ここだけ半音です。</p>
+  <p>黒い鍵盤には2通りの呼び方があります。<b>♯（シャープ）</b>は半音上、<b>♭（フラット）</b>は半音下という意味なので、C の半音上＝<b>C♯</b>、D の半音下＝<b>D♭</b> は同じ音です。</p>
+  <div class="point">ポイント：音は12種類／C D E F G A B ＝ ドレミファソラシ／E–F と B–C は半音</div>`,
+  init(el){
+    const kb = el.querySelector('[data-w=kb]'), out = el.querySelector('[data-w=out]');
+    const show = (m, marks) => {
+      kbDraw(kb, marks || {[m]:{fill:C_TONE}});
+      const pc = m % 12, i = LPC.indexOf(pc);
+      out.textContent = i >= 0 ? withJP(LET[i]) : `${spell(LET[LPC.indexOf(pc-1)],1,0)} ＝ ${spell(LET[LPC.indexOf(pc+1)],-1,0)}（黒い鍵盤）`;
+    };
+    kbDraw(kb); kbOnTap(kb, m=>{ pluck(midiFreq(m), null, 0.5); show(m); });
+    const run = (btn, ms) => Seq.play(btn, ms.length, 0.4, (i,t)=>pluck(midiFreq(ms[i]), t, 0.5), i=>show(ms[i]), false, ()=>kbDraw(kb));
+    el.querySelector('[data-w=doremi]').onclick = e => run(e.currentTarget, [60,62,64,65,67,69,71,72]);
+    el.querySelector('[data-w=chroma]').onclick = e => run(e.currentTarget, [60,61,62,63,64,65,66,67,68,69,70,71,72]);
+  },
+  quiz(){
+    const i = rnd(7), x = pick([0,1,3,4,5]);
+    return [
+      mkQ(`「${LET_JP[i]}」を英語の音名でいうと？`, LET[i], shuffle(LET), `${LET.map((l,k)=>l+'='+LET_JP[k]).join('、')}`),
+      mkQ('E と F の間の距離は？', '半音', ['全音','全音半','1オクターブ'], 'E–F と B–C の間には黒い鍵盤がなく、半音です。'),
+      mkQ(`${LET[x]}♯ と同じ高さの音は？`, LET[x+1]+'♭', [LET[x]+'♭', LET[(x+2)%7]+'♭', LET[x+1]+'♯'], '♯は半音上、♭は半音下。となりの音から見ると同じ黒い鍵盤です。'),
+      mkQ('1オクターブの中に、音は全部で何種類ある？', '12種類', ['7種類','8種類','10種類'], '白い鍵盤7つ＋黒い鍵盤5つ＝12種類です。'),
+      mkQ('♯（シャープ）の意味は？', '半音上げる', ['半音下げる','全音上げる','1オクターブ上げる'], '♯＝半音上、♭＝半音下です。')
+    ];
+  }
+},
+{ id:'board', title:'ギターの指板のしくみ', sub:'開放弦と、フレット＝半音',
+  body:`
+  <p>ギターの弦は6本。何も押さえずに鳴らす音（<b>開放弦</b>）は、太い6弦から順に次のとおりです。</p>
+  <div class="tbl"><div><b>E</b>6弦</div><div><b>A</b>5弦</div><div><b>D</b>4弦</div><div><b>G</b>3弦</div><div><b>B</b>2弦</div><div><b>E</b>1弦</div></div>
+  <p>そして大事なルールが1つ。<b>フレットを1つ進むと、音は半音上がります。</b> つまり1本の弦は、前回の鍵盤を横に並べたものと同じです。</p>
+  <p>弦を選ぶと、その弦の音名が並びます。指板をタップすると音が鳴ります。</p>
+  <div class="chips" data-w="str"></div>
+  <svg class="fb" data-w="fb" viewBox="0 0 372 170"></svg>
+  <div class="readout" data-w="out">指板をタップ</div>
+  <p>12フレットまで進むと半音12個ぶん＝<b>1オクターブ</b>上の、同じ名前の音に戻ります。12フレットに印（ポジションマーク）が2つあるのはそのためです。</p>
+  <div class="point">ポイント：開放弦は E A D G B E／1フレット＝半音／12フレットで同じ音名に戻る</div>
+  <div class="row"><button data-go="fretquiz">🎯 指板クイズで覚える →</button></div>`,
+  init(el){
+    const svg = el.querySelector('[data-w=fb]'), out = el.querySelector('[data-w=out]'), chips = el.querySelector('[data-w=str]');
+    let s = 5, hit = null;
+    const draw = ()=>{
+      const marks = []; for(let f=0; f<=12; f++){ const n = noteAt(s,f), nat = !n.includes('#');
+        marks.push({s, f, r: nat ? 9 : 7, fill: hit===f ? C_HIT : nat ? C_TONE : '#8a7660', label:n.replace('#','♯')}); }
+      svg.innerHTML = boardSVG(marks);
+      chips.querySelectorAll('button').forEach(b=> b.classList.toggle('on', +b.dataset.s===s));
+    };
+    chips.innerHTML = [5,4,3,2,1,0].map(i=>`<button class="chip" data-s="${i}">${i+1}弦</button>`).join('');
+    chips.querySelectorAll('button').forEach(b=> b.onclick = ()=>{ s = +b.dataset.s; hit = null; playPos(s,0); draw(); });
+    svg.addEventListener('pointerdown', e=>{ const h = boardHit(svg, e); if(!h) return; e.preventDefault();
+      playPos(h.s, h.f); s = h.s; hit = h.f; draw();
+      const n = noteAt(h.s,h.f); out.textContent = `${h.s+1}弦 ${h.f===0?'開放':h.f+'フレット'} ＝ ${NOTE_JP[n] || n.replace('#','♯')}`; });
+    draw();
+  },
+  quiz(){
+    const n = rnd(6), f = pick([1,3,5,7,8,10]), a = noteAt(5,f).replace('#','♯');
+    return [
+      mkQ(`${n+1}弦の開放弦の音は？`, noteAt(n,0), shuffle(['E','A','D','G','B','C']), '6弦から E・A・D・G・B・E です。'),
+      mkQ(`6弦（開放は E）の ${f}フレットの音は？`, a, shuffle(['F','G','A','B','C','D','F♯','G♯']), 'E から半音ずつ数えます：E→F→F♯→G→G♯→A→A♯→B→C→C♯→D'),
+      mkQ('フレットを1つ進むと、音はどれだけ上がる？', '半音', ['全音','1オクターブ','変わらない'], '1フレット＝半音、2フレット＝全音です。'),
+      mkQ('開放弦と、同じ弦の12フレットの音の関係は？', '同じ音名で1オクターブ高い', ['半音高い','全音高い','まったく別の音'], '半音12個ぶん進むと、同じ名前の高い音になります。'),
+      mkQ('5弦の開放弦（A）の2フレットの音は？', 'B', ['A♯','C','G'], 'A から半音2つ：A→A♯→B')
+    ];
+  }
+},
+{ id:'rhythm', title:'リズムの基本', sub:'拍・小節・ストローク',
+  body:`
+  <p>音楽には一定の間隔で刻まれる<b>拍（ビート）</b>があります。手拍子や足踏みで自然に取っているあれです。その速さを表すのが <b>BPM</b>（1分間の拍の数）。</p>
+  <p>拍をいくつかずつ区切ったまとまりが<b>小節</b>。ほとんどの曲は「1・2・3・4」と4拍で1小節の<b>4/4拍子</b>です。</p>
+  <div class="tbl"><div><b>4分音符</b>1拍</div><div><b>8分音符</b>半拍</div><div><b>2分音符</b>2拍</div><div><b>全音符</b>4拍</div></div>
+  <p>ギターのストロークは、腕を<b>8分音符で振り続ける</b>のが基本です。拍の頭（1・2・3・4）は<b>ダウン ↓</b>、あいだの「と」（裏拍）は<b>アップ ↑</b>。弾かないところは空振りします。</p>
+  <div class="chips" data-w="pats"></div>
+  <div class="strokes" data-w="cells"></div>
+  <div class="row"><button class="primary" data-w="play">▶ 聞いてみる</button><span class="muted">テンポは メトロノームタブの BPM（<span data-w="bpm"></span>）</span></div>
+  <p>最後のパターン（↓・↓↑・↑↓↑）は弾き語りの定番です。ギターがなくても、ひざを叩いて腕の動きを練習できます。</p>
+  <div class="point">ポイント：4/4拍子＝1小節に4拍／腕は8分で振り続ける／表はダウン、裏はアップ</div>
+  <div class="row"><button data-go="rhythm">🥁 リズム練習でタップしてみる →</button></div>`,
+  init(el){
+    const PATS = [['4分音符','D.D.D.D.'],['8分音符','DUDUDUDU'],['裏を抜く','D.DUD.DU'],['定番ストローク','D.DU.UDU']];
+    const chips = el.querySelector('[data-w=pats]'), cells = el.querySelector('[data-w=cells]'); let p = 3;
+    el.querySelector('[data-w=bpm]').textContent = M.bpm;
+    const draw = cur => { cells.innerHTML = [...PATS[p][1]].map((c,i)=>`<div class="${i===cur?'cur':''}${c==='.'?' rest':''}"><b>${c==='D'?'↓':c==='U'?'↑':'・'}</b><span>${i%2 ? 'と' : i/2+1}</span></div>`).join('');
+      chips.querySelectorAll('button').forEach((b,i)=> b.classList.toggle('on', i===p)); };
+    chips.innerHTML = PATS.map((x,i)=>`<button class="chip" data-p="${i}">${x[0]}</button>`).join('');
+    chips.querySelectorAll('button').forEach(b=> b.onclick = ()=>{ p = +b.dataset.p; Seq.stop(); draw(); });
+    el.querySelector('[data-w=play]').onclick = e => Seq.play(e.currentTarget, 8, 30 / M.bpm, (i,t)=>{
+      if(i%2===0) clickSound(t, i===0);
+      const c = PATS[p][1][i]; if(c !== '.') strum(chordFrets('Em'), t, c==='U');
+    }, i=>draw(i), true, ()=>draw());
+    draw();
+  },
+  quiz(){
+    return [
+      mkQ('4/4拍子の1小節に、4分音符はいくつ入る？', '4つ', ['2つ','3つ','8つ'], '4/4拍子は「4分音符が4つで1小節」という意味です。'),
+      mkQ('8分音符2つ分の長さは？', '4分音符1つ分', ['2分音符1つ分','全音符1つ分','16分音符1つ分'], '8分音符は4分音符の半分の長さです。'),
+      mkQ('BPM 60 は、1分間に何拍？', '60拍', ['30拍','120拍','4拍'], 'BPM は1分間の拍数。BPM 60 は1秒に1拍です。'),
+      mkQ('「1 と 2 と…」の「と」（裏拍）は、ふつうどちらで弾く？', 'アップ ↑', ['ダウン ↓','どちらでもなく弾かない','必ず両方'], '腕を8分で振り続けると、表がダウン、裏がアップになります。'),
+      mkQ('4/4拍子の1小節に、8分音符はいくつ入る？', '8つ', ['4つ','6つ','16個'], '4拍 × 2 ＝ 8つです。')
+    ];
+  }
+},
+{ id:'major', title:'メジャースケール', sub:'「全全半全全全半」ですべてが決まる',
+  body:`
+  <p>12種類の音から、相性のいい7音を選んで並べたものが<b>スケール（音階）</b>です。いちばん基本になるのが<b>メジャースケール</b>＝「ドレミファソラシド」。</p>
+  <p>ドレミ…が明るく聞こえる秘密は、音の<b>間隔</b>にあります。</p>
+  <div class="formula">全・全・半・全・全・全・半</div>
+  <p>この間隔さえ守れば、<b>どの音から始めても</b>「ドレミファソラシド」に聞こえます。始める音を<b>キー（調）</b>といいます。キーを変えて確かめてみましょう。</p>
+  <div class="row"><label class="muted">キー <select data-w="key">${keyOpts()}</select></label><button class="primary" data-w="play">▶ 鳴らす</button></div>
+  <div data-w="kb"></div>
+  <div class="steps" data-w="steps"></div>
+  <p>G から始めると、最後の「全・半」を守るために F が <b>F♯</b> になります。キーによって♯や♭がつくのは、この間隔を守るためです。</p>
+  <div class="point">ポイント：メジャースケール＝全全半全全全半／始まりの音がキー／曲のメロディもコードもここから生まれる</div>
+  <div class="row"><button data-w="toboard">🎸 このスケールを指板で見る →</button></div>`,
+  init(el){
+    const kb = el.querySelector('[data-w=kb]'), sel = el.querySelector('[data-w=key]'), steps = el.querySelector('[data-w=steps]');
+    const data = ()=>{ const k = sel.value, ns = [...scaleNotes(k,'major'), k], r = rootMidi(k);
+      return { k, ns, ms:[...T_SCALE.major.iv, 12].map(i=>r+i) }; };
+    const draw = cur => { const d = data(), marks = {};
+      d.ms.forEach((m,i)=> marks[m] = { fill: i===cur ? C_HIT : i%7===0 ? C_ROOT : C_TONE, label:d.ns[i] });
+      kbDraw(kb, marks);
+      steps.innerHTML = d.ns.map((n,i)=>`<b class="${i===cur?'cur':''}">${n}</b>` + (i<7 ? `<i>${[2,2,1,2,2,2,1][i]===2?'全':'半'}</i>` : '')).join(''); };
+    sel.onchange = ()=>{ Seq.stop(); draw(); };
+    kbOnTap(kb, m=> pluck(midiFreq(m), null, 0.5));
+    el.querySelector('[data-w=play]').onclick = e => { const d = data(); Seq.play(e.currentTarget, 8, 0.42, (i,t)=>pluck(midiFreq(d.ms[i]), t, 0.5), i=>draw(i), false, ()=>draw()); };
+    el.querySelector('[data-w=toboard]').onclick = ()=>{ $('svKey').value = parseNote(sel.value).pc; $('svScale').value = 'major'; $('svLabel').value = 'name';
+      ['svKey','svScale','svLabel'].forEach(id=> $(id).dispatchEvent(new Event('change'))); gotoTab('fret'); $('sv').scrollIntoView({block:'center'}); };
+    draw();
+  },
+  quiz(){
+    const k = pick(EASY_KEYS), n = 2 + rnd(6), ns = scaleNotes(k,'major');
+    return [
+      mkQ('メジャースケールの音の間隔は？', '全全半全全全半', ['全半全全半全全','全全全半全全半','半全全全半全全'], '3番目と4番目、7番目と8番目の間だけが半音です。'),
+      mkQ(`${k} メジャースケールの ${n}番目の音は？`, ns[n-1], shuffle(ns.filter((_,i)=>i!==n-1)), `${k} メジャー：${ns.join(' ')}`),
+      mkQ('G メジャースケールで ♯ がつく音は？', 'F♯', ['C♯','G♯','B♭'], 'G A B C D E F♯。最後の「全・半」を守るために F が F♯ になります。'),
+      mkQ('メジャースケールは何種類の音でできている？', '7音', ['5音','8音','12音'], 'ドレミファソラシの7音。8番目は最初と同じ名前の音です。'),
+      mkQ('スケールの「始まりの音」を何という？', 'キー（調）の主音', ['テンポ','拍子','コード'], '「キー C」は C から始まるスケールを使う、という意味です。')
+    ];
+  }
+},
+{ id:'interval', title:'音程（度数）', sub:'2つの音の距離に名前をつける',
+  body:`
+  <p>2つの音の距離を<b>音程（インターバル）</b>といい、「◯度」という単位で数えます。同じ音が1度、となりの音名が2度、その次が3度…という数え方です。</p>
+  <p>C から E は「C・D・E」と3つ数えるので<b>3度</b>。ただし3度には広い（半音4つ＝<b>長3度</b>）と狭い（半音3つ＝<b>短3度</b>）があります。この違いが、あとで出てくるメジャーとマイナーの違いになります。</p>
+  <div class="row"><label class="muted">基準の音 <select data-w="root">${keyOpts(EASY_KEYS)}</select></label></div>
+  <div class="answers small" data-w="ivs"></div>
+  <div data-w="kb"></div>
+  <div class="readout" data-w="out">音程のボタンをタップ</div>
+  <p>特に大事なのは次の3つです。</p>
+  <div class="tbl"><div><b>長3度</b>半音4つ・明るい</div><div><b>短3度</b>半音3つ・暗い</div><div><b>完全5度</b>半音7つ・安定</div></div>
+  <div class="point">ポイント：音程＝2音の距離／長3度は半音4つ、短3度は3つ、完全5度は7つ</div>
+  <div class="row"><button data-go="interval">👂 音程当てで耳を鍛える →</button></div>`,
+  init(el){
+    const kb = el.querySelector('[data-w=kb]'), sel = el.querySelector('[data-w=root]'), out = el.querySelector('[data-w=out]'), box = el.querySelector('[data-w=ivs]');
+    box.innerHTML = T_IV.slice(1).map((x,i)=>`<button data-i="${i+1}">${x[0]}</button>`).join('');
+    const base = ()=>({[rootMidi(sel.value)]:{fill:C_ROOT, label:sel.value}});
+    box.querySelectorAll('button').forEach(b=> b.onclick = ()=>{
+      const i = +b.dataset.i, r = rootMidi(sel.value), n = spell(sel.value, i, T_IV[i][1]), t = ac().currentTime + 0.02;
+      pluck(midiFreq(r), t, 0.5); pluck(midiFreq(r+i), t+0.55, 0.5);
+      kbDraw(kb, {...base(), [r+i]:{fill:C_TONE, label:n}});
+      out.textContent = `${sel.value} → ${n}：${T_IV[i][0]}（半音${i}つ）`;
+    });
+    sel.onchange = ()=>{ kbDraw(kb, base()); out.textContent = '音程のボタンをタップ'; };
+    kbOnTap(kb, m=> pluck(midiFreq(m), null, 0.5));
+    kbDraw(kb, base());
+  },
+  quiz(){
+    const r = pick(EASY_KEYS), r2 = pick(EASY_KEYS), i = pick([3,4,5,7]);
+    const up = (root, s) => spell(root, s, T_IV[s][1]);
+    return [
+      mkQ(`${r} の長3度上の音は？`, up(r,4), [up(r,3), up(r,5), up(r,7), up(r,2)], '長3度は半音4つ分です。'),
+      mkQ(`${r2} の完全5度上の音は？`, up(r2,7), [up(r2,5), up(r2,4), up(r2,9), up(r2,8)], '完全5度は半音7つ分です。'),
+      mkQ(`${T_IV[i][0]}は、半音いくつ分？`, i+'つ', ['2つ','3つ','4つ','5つ','7つ','6つ'].filter(x=>x!==i+'つ'), '短3度＝3、長3度＝4、完全4度＝5、完全5度＝7。'),
+      mkQ('長3度と短3度、明るく聞こえるのは？', '長3度', ['短3度','どちらも同じ','完全5度'], '広い長3度は明るく、狭い短3度は暗く聞こえます。'),
+      mkQ('C から E までの音程は？', '長3度', ['短3度','完全4度','長2度'], 'C・D・E と数えて3度。半音4つなので長3度です。')
+    ];
+  }
+},
+{ id:'chord', title:'コードのしくみ', sub:'1つ飛ばしに3つ重ねる',
+  body:`
+  <p><b>コード（和音）</b>は、複数の音を同時に鳴らしたものです。基本の作り方はとてもシンプルで、スケールの音を<b>1つ飛ばしに3つ</b>重ねるだけ。</p>
+  <p>C から「C・<s>D</s>・E・<s>F</s>・G」と取ると <b>C・E・G</b>。これが C コードです。土台の音を<b>ルート</b>、そこから<b>3度</b>、<b>5度</b>の音と呼びます。</p>
+  <div class="tbl"><div><b>メジャー</b>ルート＋長3度＋完全5度</div><div><b>マイナー</b>ルート＋短3度＋完全5度</div></div>
+  <p>違いは<b>3度の音が半音違うだけ</b>。それだけで明るい・暗いが変わります。聞き比べてみましょう。</p>
+  <div class="row"><select data-w="root">${keyOpts(KEYS)}</select><select data-w="ty" class="grow">${Object.entries(T_CHORD).map(([k,v])=>`<option value="${k}">${v.jp}</option>`).join('')}</select></div>
+  <div class="readout" data-w="out"></div>
+  <div data-w="kb"></div>
+  <div class="row"><button class="primary" data-w="play">▶ 鳴らす</button><button data-w="cmp">▶ メジャー／マイナー聞き比べ</button></div>
+  <div data-w="dia" style="text-align:center"></div>
+  <p>ギターのコードフォームは6本の弦を押さえますが、鳴っているのはこの3種類の音（の重複）だけです。たとえば C のフォームは 5弦から C・E・G・C・E。</p>
+  <p>3つの音にもう1つ（7度）を足したのが <b>セブンス系</b>のコード。少し複雑でおしゃれな響きになります。</p>
+  <div class="point">ポイント：コード＝ルート・3度・5度／3度が長いとメジャー、短いとマイナー</div>
+  <div class="row"><button data-go="chordear">🎧 コード当てで聞き分ける →</button></div>`,
+  init(el){
+    const kb = el.querySelector('[data-w=kb]'), rs = el.querySelector('[data-w=root]'), ts = el.querySelector('[data-w=ty]'), out = el.querySelector('[data-w=out]'), dia = el.querySelector('[data-w=dia]');
+    const DEG = ['ルート','3度','5度','7度'];
+    const draw = (ty = ts.value) => { const c = T_CHORD[ty], ns = chordNotes(rs.value, ty), r = rootMidi(rs.value), marks = {};
+      c.iv.forEach((s,i)=> marks[r+s] = { fill: i===0 ? C_ROOT : C_TONE, label:ns[i] });
+      kbDraw(kb, marks);
+      out.innerHTML = `<b>${rs.value}${c.sym}</b>（${c.jp}）＝ ${ns.map((n,i)=>`${n}<small>${DEG[i]}</small>`).join(' ・ ')}<br><small>${c.f}</small>`;
+      const name = rs.value + c.sym;
+      dia.innerHTML = CHORDS[name] ? `<p class="muted" style="margin:8px 0 0">ギターではこう押さえます</p>${diagram(name, 120)}` : ''; };
+    const sound = (ty, t) => { const r = rootMidi(rs.value); T_CHORD[ty].iv.forEach((s,i)=> pluck(midiFreq(r+s), t + i*0.3, 0.45)); playChord(rs.value, ty, t + T_CHORD[ty].iv.length*0.3 + 0.2); };
+    rs.onchange = ts.onchange = ()=>{ Seq.stop(); draw(); };
+    kbOnTap(kb, m=> pluck(midiFreq(m), null, 0.5));
+    el.querySelector('[data-w=play]').onclick = ()=> sound(ts.value, ac().currentTime + 0.02);
+    el.querySelector('[data-w=cmp]').onclick = e => Seq.play(e.currentTarget, 2, 2.6, (i,t)=> sound(i ? 'm' : 'M', t), i=> draw(i ? 'm' : 'M'), false, ()=>draw());
+    draw();
+  },
+  quiz(){
+    const r = pick(EASY_KEYS), ty = pick(['M','m']), r2 = pick(['A','D','E']);
+    const j = (root, t) => chordNotes(root, t).join('・');
+    return [
+      mkQ(`${r}${T_CHORD[ty].sym} の構成音は？`, j(r,ty), [j(r, ty==='M'?'m':'M'), j(r,'dim'), scaleNotes(r,'major').slice(0,3).join('・')], `${T_CHORD[ty].jp}＝${T_CHORD[ty].f}`),
+      mkQ('メジャーコードとマイナーコードの違いを決めている音は？', '3度の音', ['ルート','5度の音','いちばん高い音'], '3度が半音違うだけで、明るい・暗いが変わります。'),
+      mkQ('メジャーコードをマイナーコードにするには？', '3度を半音下げる', ['ルートを半音下げる','5度を半音上げる','3度を半音上げる'], '長3度（半音4つ）→ 短3度（半音3つ）にします。'),
+      mkQ(`${r2}m の「3度の音」は？`, chordNotes(r2,'m')[1], [chordNotes(r2,'M')[1], chordNotes(r2,'m')[2], spell(r2,2,1)], `${r2}m ＝ ${j(r2,'m')}`),
+      mkQ('C コードのフォームで鳴っている音の種類は？', 'C・E・G の3種類', ['6種類ぜんぶ違う音','C だけ','C・D・E・F・G'], '6本の弦で鳴らしても、音の種類は3つ。同じ音が重なっています。')
+    ];
+  }
+},
+{ id:'diatonic', title:'キーとダイアトニックコード', sub:'そのキーで使える7つのコード',
+  body:`
+  <p>メジャースケールの7音それぞれをルートにして、スケールの音だけで「1つ飛ばし」にコードを作ると、<b>7つのコード</b>ができます。これを<b>ダイアトニックコード</b>といい、そのキーの曲はほぼこの7つでできています。</p>
+  <p>順番を<b>ローマ数字</b>で表します。大文字がメジャー、小文字がマイナーです。タップして聞いてみましょう。</p>
+  <div class="row"><label class="muted">キー <select data-w="key">${keyOpts()}</select></label><button class="primary" data-w="play">▶ 順番に鳴らす</button></div>
+  <div class="dia7" data-w="chords"></div>
+  <p>どのキーでも <b>I・IV・V がメジャー</b>、<b>ii・iii・vi がマイナー</b>という並びは同じです。そしてコードには役割があります。</p>
+  <div class="tbl fn"><div class="T"><b>トニック</b>I（と vi・iii）<br>落ち着く「家」</div><div class="S"><b>サブドミナント</b>IV（と ii）<br>少し出かける</div><div class="D"><b>ドミナント</b>V<br>家に帰りたくなる</div></div>
+  <p>I・IV・V の3つは<b>スリーコード</b>と呼ばれ、これだけで弾ける曲がたくさんあります。キー G なら G・C・D、キー C なら C・F・G です。</p>
+  <div class="point">ポイント：キーごとに使えるコードは7つ／I・IV・V はメジャー、ii・iii・vi はマイナー／V → I で落ち着く</div>`,
+  init(el){
+    const sel = el.querySelector('[data-w=key]'), box = el.querySelector('[data-w=chords]');
+    const draw = cur => { box.innerHTML = diatonic(sel.value).map((c,i)=>`<button class="${c.fn}${i===cur?' cur':''}" data-i="${i}"><small>${c.roman}</small><b>${c.name}</b></button>`).join('');
+      box.querySelectorAll('button').forEach(b=> b.onclick = ()=>{ const c = diatonic(sel.value)[+b.dataset.i]; playChord(c.root, c.ty); }); };
+    sel.onchange = ()=>{ Seq.stop(); draw(); };
+    el.querySelector('[data-w=play]').onclick = e => { const d = [...diatonic(sel.value), diatonic(sel.value)[0]];
+      Seq.play(e.currentTarget, 8, 0.9, (i,t)=> playChord(d[i].root, d[i].ty, t), i=> draw(i%7), false, ()=>draw()); };
+    draw();
+  },
+  quiz(){
+    const k = pick(EASY_KEYS), i = pick([1,3,4,5]), d = diatonic(k), k2 = pick(['C','G','D','A']);
+    const three = key => { const x = diatonic(key); return [x[0],x[3],x[4]].map(c=>c.name).join('・'); };
+    return [
+      mkQ(`キー ${k} の ${ROMAN[i]} のコードは？`, d[i].name, shuffle(d.filter((_,j)=>j!==i).map(c=>c.name)), `キー ${k}：${d.map(c=>c.name).join(' ')}`),
+      mkQ('メジャーキーで、マイナーコードになるのは何番目？', 'ii・iii・vi', ['I・IV・V','ii・IV・vi','iii・V・vii'], 'I・IV・V がメジャー、ii・iii・vi がマイナーです。'),
+      mkQ('いちばん落ち着く「家」のようなコードは？', 'I（トニック）', ['V（ドミナント）','IV（サブドミナント）','vii°'], '曲の最後はたいてい I で終わります。'),
+      mkQ('I に戻りたくなる、緊張感のあるコードは？', 'V（ドミナント）', ['I（トニック）','vi','iii'], 'V → I の動きは音楽でいちばん強い「解決」です。'),
+      mkQ(`キー ${k2} のスリーコード（I・IV・V）は？`, three(k2), EASY_KEYS.filter(x=>x!==k2).map(three), 'スケールの1番目・4番目・5番目の音がルートになります。')
+    ];
+  }
+},
+{ id:'prog', title:'コード進行', sub:'定番の流れを覚えて曲を弾く',
+  body:`
+  <p>コードを並べたものが<b>コード進行</b>です。前回のローマ数字で書くと、キーが変わっても同じ進行として覚えられます。世の中の曲は、いくつかの<b>定番の進行</b>の組み合わせでできています。</p>
+  <div class="row"><label class="muted">キー <select data-w="key">${keyOpts(KEYS,'G')}</select></label><select data-w="prog" class="grow"></select></div>
+  <div class="progrow" data-w="row"></div>
+  <div class="row"><button class="primary" data-w="play">▶ ループ再生</button><span class="muted">BPM <span data-w="bpm"></span></span><span class="grow"></span><button data-w="practice">🎼 この進行で練習 →</button></div>
+  <p class="muted" data-w="note" style="margin:6px 0 0"></p>
+  <p>聞きながら「家（I）から出かけて、V で帰りたくなり、I に戻る」という流れを感じてみてください。キーを変えても、流れの印象は同じはずです。</p>
+  <p>初心者には <b>キー G</b>（G・C・D・Em）と <b>キー C</b>（C・F・G・Am）がおすすめ。F は少し難しいので、最初は Fmaj7 で代用してもOKです。</p>
+  <div class="point">ポイント：進行はローマ数字で覚える／I–V–vi–IV はポップスの大定番／キーを変えるのは同じ進行の高さを変えるだけ</div>`,
+  init(el){
+    const PROGS = [
+      ['I – V – vi – IV（ポップスの大定番）',[0,4,5,3]], ['I – IV – V – I（スリーコード）',[0,3,4,0]], ['I – vi – IV – V（50年代・循環コード）',[0,5,3,4]],
+      ['IV – V – iii – vi（王道進行）',[3,4,2,5]], ['vi – IV – V – I（小室進行）',[5,3,4,0]], ['I – V – vi – iii – IV – I – IV – V（カノン進行）',[0,4,5,2,3,0,3,4]],
+      ['12小節ブルース（セブンスで）',[0,0,0,0,3,3,0,0,4,3,0,4],true]
+    ];
+    const ks = el.querySelector('[data-w=key]'), ps = el.querySelector('[data-w=prog]'), row = el.querySelector('[data-w=row]'), note = el.querySelector('[data-w=note]');
+    ps.innerHTML = PROGS.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('');
+    el.querySelector('[data-w=bpm]').textContent = M.bpm;
+    const chords = ()=>{ const p = PROGS[+ps.value], d = diatonic(ks.value);
+      return p[1].map(i=> p[2] ? { root:d[i].root, ty:'7', name:d[i].root+'7', roman:ROMAN[i].toUpperCase()+'7' } : d[i]); };
+    const draw = cur => { const cs = chords();
+      row.innerHTML = cs.map((c,i)=>`<div class="${i===cur?'cur':''}"><small>${c.roman}</small><b>${c.name}</b></div>`).join('');
+      const have = [...new Set(cs.map(c=>c.name))].filter(n=>CHORDS[n]), all = new Set(cs.map(c=>c.name)).size;
+      note.textContent = have.length === all ? 'すべてコード表にあるフォームで弾けます。' : `コード表にあるのは ${have.join('・') || 'なし'}。ほかは構成音で鳴らしています（キー G・C・A・E が弾きやすいです）。`;
+      el.querySelector('[data-w=practice]').disabled = have.length < 2; };
+    ks.onchange = ps.onchange = ()=>{ Seq.stop(); draw(); };
+    el.querySelector('[data-w=play]').onclick = e => { const cs = chords(), beat = 60 / M.bpm;
+      Seq.play(e.currentTarget, cs.length, beat*4, (i,t)=>{ [0,2,3].forEach(b=> playChord(cs[i].root, cs[i].ty, t + b*beat)); playChord(cs[i].root, cs[i].ty, t + 3.5*beat, true); }, i=>draw(i), true, ()=>draw()); };
+    el.querySelector('[data-w=practice]').onclick = ()=>{ const have = [...new Set(chords().map(c=>c.name))].filter(n=>CHORDS[n]);
+      selected.clear(); have.forEach(n=>selected.add(n)); Store.set('selChords', have);
+      document.querySelectorAll('.chip[data-c]').forEach(b=> b.classList.toggle('on', selected.has(b.dataset.c)));
+      gotoTab('chord'); };
+    draw();
+  },
+  quiz(){
+    const k = pick(['C','G','D','A']), d = diatonic(k), nm = idx => idx.map(i=>d[i].name).join(' – ');
+    return [
+      mkQ(`キー ${k} で「I – V – vi – IV」を弾くと？`, nm([0,4,5,3]), [nm([0,3,4,0]), nm([0,5,3,4]), nm([0,4,3,5])], `キー ${k}：I=${d[0].name}、IV=${d[3].name}、V=${d[4].name}、vi=${d[5].name}`),
+      mkQ(`キー ${k} で「I – IV – V」を弾くと？`, nm([0,3,4]), [nm([0,4,3]), nm([0,1,2]), nm([0,5,4])], 'スケールの1・4・5番目がルートのメジャーコードです。'),
+      mkQ('コード進行をローマ数字で覚える利点は？', 'キーが変わっても同じ進行として使える', ['指が速く動くようになる','チューニングが要らなくなる','コードが3つで済む'], '「I–V–vi–IV」と覚えれば、どのキーでも弾けます。'),
+      mkQ('曲の終わりで「終わった感じ」が強く出る動きは？', 'V → I', ['I → V','I → vi','IV → V'], 'ドミナント（V）からトニック（I）へ戻ると、落ち着いて終わります。'),
+      mkQ('「I – V – vi – IV」の vi はどんなコード？', 'マイナーコード', ['メジャーコード','セブンスコード','ディミニッシュ'], '小文字のローマ数字はマイナーです。')
+    ];
+  }
+},
+{ id:'minor', title:'マイナーキーと平行調', sub:'同じ音なのに暗く聞こえる理由',
+  body:`
+  <p>メジャースケールの<b>6番目の音から</b>同じ音を並べ直すと、暗く切ない響きの<b>マイナースケール</b>になります。</p>
+  <p>C メジャー（C D E F G A B）を A から始めると A B C D E F G ＝ <b>A マイナースケール</b>。使う音はまったく同じで、「家」になる音が違うだけです。この関係を<b>平行調</b>といいます。</p>
+  <div class="row"><label class="muted">メジャーキー <select data-w="key">${keyOpts()}</select></label></div>
+  <div class="readout" data-w="out"></div>
+  <div data-w="kb"></div>
+  <div class="row"><button class="primary" data-w="pmaj">▶ メジャー</button><button class="primary" data-w="pmin">▶ 平行マイナー</button></div>
+  <p>マイナースケールの間隔は「全・半・全・全・半・全・全」。メジャーとの大きな違いは <b>3番目の音が半音低い</b>（短3度）ことです。コードのメジャー／マイナーと同じ理屈ですね。</p>
+  <p>だから、キー C の曲とキー Am の曲は<b>同じ7つのコード</b>を使います。Am から始めて Am で終わると、同じコードでも切ない曲になります。</p>
+  <div class="point">ポイント：メジャーの6番目から始めるとマイナー／C と Am、G と Em は同じ音を使う平行調</div>`,
+  init(el){
+    const kb = el.querySelector('[data-w=kb]'), sel = el.querySelector('[data-w=key]'), out = el.querySelector('[data-w=out]');
+    const rel = ()=> scaleNotes(sel.value,'major')[5];
+    const draw = (mode, cur) => { const k = sel.value, mk = rel(), marks = {};
+      const root = mode==='min' ? mk : k, sk = mode==='min' ? 'minor' : 'major', r = rootMidi(root);
+      const ns = [...scaleNotes(root, sk), root];
+      [...T_SCALE[sk].iv, 12].forEach((s,i)=>{ if(r+s >= 48 && r+s <= 72) marks[r+s] = { fill: i===cur ? C_HIT : i%7===0 ? C_ROOT : C_TONE, label:ns[i] }; });
+      kbDraw(kb, marks);
+      out.innerHTML = `<b>${k} メジャー</b>：${scaleNotes(k,'major').join(' ')}<br><b>${mk} マイナー</b>：${scaleNotes(mk,'minor').join(' ')}`; };
+    const play = (btn, mode) => { const root = mode==='min' ? rel() : sel.value, sk = mode==='min' ? 'minor' : 'major';
+      const r = rootMidi(root), ms = [...T_SCALE[sk].iv, 12].map(s=>r+s);
+      Seq.play(btn, 8, 0.42, (i,t)=>pluck(midiFreq(ms[i]), t, 0.5), i=>draw(mode, i), false, ()=>draw(mode)); };
+    sel.onchange = ()=>{ Seq.stop(); draw('maj'); };
+    kbOnTap(kb, m=> pluck(midiFreq(m), null, 0.5));
+    el.querySelector('[data-w=pmaj]').onclick = e => play(e.currentTarget, 'maj');
+    el.querySelector('[data-w=pmin]').onclick = e => play(e.currentTarget, 'min');
+    draw('maj');
+  },
+  quiz(){
+    const k = pick(EASY_KEYS), rel = key => scaleNotes(key,'major')[5] + 'm';
+    return [
+      mkQ(`${k} メジャーの平行調（同じ音を使うマイナーキー）は？`, rel(k), [k+'m', scaleNotes(k,'major')[1]+'m', scaleNotes(k,'major')[2]+'m', scaleNotes(k,'major')[4]+'m'], 'メジャースケールの6番目の音がルートになります。'),
+      mkQ('平行マイナーの始まりの音は、メジャースケールの何番目？', '6番目', ['2番目','3番目','5番目'], 'C メジャーなら6番目は A → A マイナーです。'),
+      mkQ('ナチュラルマイナースケールの間隔は？', '全半全全半全全', ['全全半全全全半','全半全全全半全','半全全半全全全'], 'メジャーの間隔を6番目から読み直したものです。'),
+      mkQ('A マイナースケールに ♯ や ♭ はつく？', 'つかない（C メジャーと同じ音）', ['F♯ がつく','B♭ がつく','C♯ がつく'], 'A B C D E F G。C メジャーと同じ白い鍵盤だけです。'),
+      mkQ('メジャースケールとマイナースケールで、響きの違いを決める音は？', '3番目の音', ['1番目の音','4番目の音','5番目の音'], 'マイナーは3番目が半音低い（短3度）ので暗く聞こえます。')
+    ];
+  }
+},
+{ id:'penta', title:'ペンタトニックでアドリブ入門', sub:'5つの音で、もうソロが弾ける',
+  body:`
+  <p>スケール7音のうち、ぶつかりやすい2音を抜いた<b>5音のスケール</b>が<b>ペンタトニック</b>です（ペンタ＝5）。どの音を弾いても外れにくいので、ギターソロやアドリブの第一歩になります。</p>
+  <div class="tbl"><div><b>メジャーペンタ</b>メジャーから4番目と7番目を抜く</div><div><b>マイナーペンタ</b>マイナーから2番目と6番目を抜く</div></div>
+  <p>ロックやブルースの主役は<b>マイナーペンタ</b>。A マイナーペンタは <b>A・C・D・E・G</b> です。下の指板で光っている場所なら、どこを弾いても大丈夫。</p>
+  <p>伴奏を流して、指板を自由にタップしてみましょう。オレンジ色（A）で終わると落ち着きます。</p>
+  <div class="row"><button class="primary" data-w="back">▶ 伴奏を流す（Am – G – F – G）</button><span class="muted">BPM <span data-w="bpm"></span></span></div>
+  <svg class="fb" data-w="fb" viewBox="0 0 372 170"></svg>
+  <p>5〜8フレットの四角い形（ボックス）は、ギタリストが最初に覚える定番ポジションです。この形ごと横にずらせば、ほかのキーでも使えます。</p>
+  <div class="point">ポイント：ペンタ＝5音で外れにくい／A マイナーペンタ＝A C D E G／ルートで終わると落ち着く</div>
+  <div class="row"><button data-w="toboard">🎸 ほかのキー・スケールを指板で見る →</button></div>`,
+  init(el){
+    const svg = el.querySelector('[data-w=fb]'); let hit = null, tm = null;
+    el.querySelector('[data-w=bpm]').textContent = M.bpm;
+    const draw = ()=>{ const marks = [];
+      for(let s=0;s<6;s++) for(let f=0;f<=12;f++){ const k = [0,3,5,7,10].indexOf(((OPEN_TOP[s]+f)%12 - 9 + 12)%12); if(k<0) continue;
+        const box = f>=5 && f<=8, h = hit && hit.s===s && hit.f===f;
+        marks.push({s, f, r: h ? 11 : 9, fill: h ? C_HIT : k===0 ? C_ROOT : box ? C_TONE : '#8a6a3a', label:noteAt(s,f), text: k===0 ? '#fff' : '#2a1a08'}); }
+      svg.innerHTML = boardSVG(marks); };
+    svg.addEventListener('pointerdown', e=>{ const h = boardHit(svg, e); if(!h) return; e.preventDefault();
+      playPos(h.s, h.f); hit = h; draw(); clearTimeout(tm); tm = setTimeout(()=>{ hit = null; draw(); }, 300); });
+    el.querySelector('[data-w=back]').onclick = e => { const cs = ['Am','G','F','G'], beat = 60 / M.bpm;
+      Seq.play(e.currentTarget, 4, beat*4, (i,t)=>{ [0,1,2,3].forEach(b=> clickSound(t + b*beat, false)); [0,2].forEach(b=> strum(chordFrets(cs[i]), t + b*beat, false, 0.2)); }, null, true); };
+    el.querySelector('[data-w=toboard]').onclick = ()=>{ $('svKey').value = 9; $('svScale').value = 'minpenta';
+      ['svKey','svScale'].forEach(id=> $(id).dispatchEvent(new Event('change'))); gotoTab('fret'); $('sv').scrollIntoView({block:'center'}); };
+    draw();
+  },
+  quiz(){
+    return [
+      mkQ('ペンタトニックスケールは何音でできている？', '5音', ['3音','7音','12音'], 'ペンタ＝5。スケール7音から2音を抜いたものです。'),
+      mkQ('メジャースケールから何番目の音を抜くとメジャーペンタになる？', '4番目と7番目', ['1番目と5番目','2番目と6番目','3番目と7番目'], 'C メジャーなら F と B を抜いて C D E G A。'),
+      mkQ('A マイナーペンタトニックの音は？', 'A・C・D・E・G', ['A・B・C・D・E','A・C♯・E・F♯・G','A・C・E・F・G'], 'A マイナー（A B C D E F G）から B と F を抜きます。'),
+      mkQ('A マイナーペンタと同じ音でできているのは？', 'C メジャーペンタ', ['A メジャーペンタ','E メジャーペンタ','G メジャーペンタ'], '平行調の関係（C と Am）はペンタでも同じです。'),
+      mkQ('アドリブのフレーズを落ち着いて終わらせるには？', 'ルートの音で終わる', ['いちばん高い音で終わる','必ず開放弦で終わる','速く弾いて終わる'], 'キーの「家」であるルートに着地すると安定します。')
+    ];
+  }
+}
+];
+
+// --- 画面 ---
+const Learn = { done:new Set(Store.get('lessonsDone', [])), cur:-1 };
+function gotoTrain(mode){ gotoTab('train'); setTrainMode(mode); }
+function renderLessonList(){
+  const n = LESSONS.filter(l=>Learn.done.has(l.id)).length;
+  $('lpFill').style.width = (n / LESSONS.length * 100) + '%';
+  $('lpText').textContent = n === LESSONS.length ? `全 ${n} レッスン完了！ おつかれさまでした 🎉` : `${n} / ${LESSONS.length} レッスン完了`;
+  const next = LESSONS.findIndex(l=>!Learn.done.has(l.id));
+  $('lessonList').innerHTML = LESSONS.map((l,i)=>`<button class="litem${Learn.done.has(l.id)?' done':''}${i===next?' next':''}" data-i="${i}">
+    <span class="num">${Learn.done.has(l.id) ? '✓' : i+1}</span><span class="tt"><b>${l.title}</b><small>${l.sub}</small></span>${i===next?'<span class="go">つぎはここ</span>':''}</button>`).join('');
+  $('lessonList').querySelectorAll('button').forEach(b=> b.onclick = ()=> openLesson(+b.dataset.i));
+}
+function closeLesson(){ Seq.stop(); Learn.cur = -1; $('lessonView').hidden = true; $('lessonView').innerHTML = ''; $('learnHome').hidden = false; renderLessonList(); window.scrollTo(0,0); }
+function openLesson(i){
+  Seq.stop(); Learn.cur = i;
+  const L = LESSONS[i], v = $('lessonView');
+  v.innerHTML = `<div class="row"><button id="lBack">← 一覧へ</button><span class="muted">レッスン ${i+1} / ${LESSONS.length}</span></div>
+    <h2 class="ltitle">${L.title}</h2><div class="lesson">${L.body}</div>
+    <div class="lquiz"><h3>理解度チェック <span id="lqDots"></span></h3><div class="qtext" id="lqQ"></div><div class="answers two" id="lqA"></div><div class="lwhy" id="lqWhy"></div></div>
+    <div class="row" style="margin-top:14px"><span class="grow"></span><button class="primary" id="lNext" hidden></button></div>`;
+  $('learnHome').hidden = true; v.hidden = false; window.scrollTo(0,0);
+  $('lBack').onclick = closeLesson;
+  v.querySelectorAll('[data-go]').forEach(b=> b.onclick = ()=>{ const g = b.dataset.go;
+    if(g==='fretquiz'){ gotoTab('fret'); } else gotoTrain(g); });
+  L.init(v);
+  // 理解度チェック：3問正解で完了
+  let ok = 0, pool = [], locked = false;
+  const dots = ()=> $('lqDots').innerHTML = [0,1,2].map(k=>`<i class="${k<ok?'on':''}"></i>`).join('');
+  const finish = ()=>{
+    Learn.done.add(L.id); Store.set('lessonsDone', [...Learn.done]);
+    $('lqQ').textContent = '🎉 レッスン完了！'; $('lqA').innerHTML = ''; $('lqWhy').textContent = '';
+    const nb = $('lNext'); nb.hidden = false;
+    if(i+1 < LESSONS.length){ nb.textContent = `次のレッスン：${LESSONS[i+1].title} →`; nb.onclick = ()=>openLesson(i+1); }
+    else { nb.textContent = '一覧へ戻る'; nb.onclick = closeLesson; }
+  };
+  const ask = ()=>{
+    if(Learn.cur !== i) return;
+    if(!pool.length) pool = shuffle(L.quiz());
+    const q = pool.pop(); locked = false;
+    $('lqQ').textContent = q.q; $('lqWhy').textContent = '';
+    $('lqA').innerHTML = q.opts.map((o,k)=>`<button data-k="${k}">${o}</button>`).join('');
+    $('lqA').querySelectorAll('button').forEach(b=> b.onclick = ()=>{
+      if(locked) return; locked = true;
+      const right = +b.dataset.k === q.a;
+      b.className = right ? 'ok' : 'ng'; if(!right) $('lqA').children[q.a].className = 'ok';
+      $('lqWhy').textContent = (right ? '✓ 正解！ ' : '✗ ') + q.why;
+      if(right) ok++; dots();
+      setTimeout(()=> ok >= 3 ? finish() : ask(), right ? 1500 : 3200);
+    });
+  };
+  dots(); ask();
+}
+renderLessonList();
+
+/* ---------- 前回開いていたタブを復元（初回は「学ぶ」から） ---------- */
+{ const t = Store.get('tab', 'learn'); gotoTab(document.getElementById('tab-'+t) ? t : 'learn'); }
 
 /* ---------- ホーム画面追加の案内・オフライン対応 ---------- */
 const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;

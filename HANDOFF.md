@@ -17,6 +17,7 @@ It needs no build step, server, or external audio files. Opening it in a browser
 
 | Tab | Feature | Notes |
 |---|---|---|
+| Learn (theory lessons) | 10 step-by-step lessons | Note names → fretboard → rhythm/strumming → major scale → intervals → chord construction → diatonic chords → chord progressions → minor keys/relative keys → pentatonic improvisation. Each has interactive sound demos and a quiz (3 correct answers completes it); progress is saved |
 | Metronome | BPM 30–240, ±1/±5 buttons, slider | |
 | | Time signature (2/3/4/6), accent on beat 1 | |
 | | Tap tempo | Averages the last 4 taps, resets after a 2.5 s gap |
@@ -87,6 +88,19 @@ It needs no build step, server, or external audio files. Opening it in a browser
   (falls back to `currentTime - outputLatency`), then `rhythmTap()` finds the nearest grid point.
 - Fretboard: `boardSVG(marks)` draws any fretboard with markers, `boardHit(svg, e)` turns a tap into `{s, f}`.
 
+### Learn tab (theory lessons)
+- Theory helpers: `spell(root, semitones, letterStep)` spells notes correctly per key (B♭ in F major, never A♯),
+  `scaleNotes()`, `chordNotes()`, `diatonic(key)` (7 chords with roman numerals and T/S/D function).
+- `LESSONS`: array of `{id, title, sub, body (HTML), init(el), quiz()}`. `body` marks widgets with `data-w`;
+  `init` wires them up. `quiz()` returns questions built by `mkQ(question, correct, wrongs, why)`.
+  To add a lesson, append an object; the list, progress bar and quiz flow pick it up automatically.
+- `Seq.play(btn, steps, stepLen, fn(i, t), ui(i), loop)`: one-at-a-time sequencer for demos (scales, strumming
+  patterns, progression loops). Audio is scheduled on the audio clock; `gotoTab()` and leaving a lesson stop it.
+- `kbDraw(el, marks)` / `kbOnTap()`: two-octave SVG keyboard. `playChord(root, type, t, up)` uses the guitar
+  fingering from `CHORDS` when one exists, otherwise stacks the chord tones.
+- `strum(frets, t, up, vol)` now supports scheduled time and up-strokes.
+- Completed lesson ids are stored in `gtr_lessonsDone`; the last open tab in `gtr_tab` (first visit opens Learn).
+
 ### Data
 - `CHORDS`: frets listed from the 6th string to the 1st, with -1 meaning muted. Barre chords are written as `{f:[...], barre:[fret, starting string index]}`.
 - `OPEN = [40,45,50,55,59,64]`: MIDI numbers of the open strings (6th string to 1st).
@@ -101,6 +115,9 @@ It needs no build step, server, or external audio files. Opening it in a browser
   - G or Am played, judged against C → wrong, with the missing and extra notes named correctly
   - 2nd string left open on a C chord → B correctly reported as an extra note
 - iPhone 13 / iPad Pro 11 emulation in Playwright (Chromium): every tab and training mode, no console errors
+- Theory check: all 12 major keys, their relative minors, diatonic chords, chord tones and intervals printed and
+  verified for correct spelling; every lesson quiz generated 300 times with no duplicate/missing options;
+  all 10 lessons completed end-to-end in emulation with no errors
 - Rhythm timing math: taps injected at 0 / +40 / −25 ms and on an off-beat 8th were measured exactly
 - **Not yet tested**: mic input from a real guitar, and behavior on real devices (iOS Safari / Android Chrome).
   On a real iPhone, check: sound with the silent switch on, the mic tuner, and whether rhythm offsets look biased
@@ -136,6 +153,8 @@ Mic audio is analyzed only in the browser and is never sent anywhere.
 - Practice log (a calendar of daily practice time)
 - Tab-reading practice mode
 - More realistic sound using recorded samples (CC0 from Freesound, etc.)
+- More lessons (barre chords and the CAGED system, 7th-chord functions, secondary dominants, reading tab)
+- Song-based practice (pick a progression and strumming pattern, play along)
 - Latency calibration for the rhythm mode (useful with Bluetooth earphones)
 - Rhythm patterns beyond a straight grid (e.g. syncopation reading)
 
@@ -146,4 +165,4 @@ Give Claude `guitar-practice.html` along with this document and ask something li
 > "Read HANDOFF.md and guitar-practice.html, then add [the feature you want]."
 
 The code is a single file split into sections marked by `/* ---------- section name ---------- */` comments
-(shared audio / settings / wake lock / tabs / metronome / tuner / chords / chord check / fretboard / training / PWA).
+(shared audio / settings / wake lock / tabs / metronome / tuner / chords / chord check / fretboard / training / learn / PWA).
