@@ -1,14 +1,16 @@
 # Guitar Practice App: Handoff Notes
 
-Last updated: 2026-11-13
+Last updated: 2026-11-12
 
 ## 1. Overview
 
 A guitar practice web app that runs from a single HTML file.
 It needs no build step, server, or external audio files. Opening it in a browser is all it takes.
 
-- File: `guitar-practice.html` (rename it to `index.html` when publishing)
-- Target devices: mainly smartphones (mobile layout with a bottom tab bar), also works on PC
+- File: `index.html` (formerly `guitar-practice.html`)
+- Supporting files for "Add to Home Screen" / offline use: `manifest.webmanifest`, `sw.js`, `icons/`
+  (`index.html` still works on its own; these are optional extras)
+- Target devices: iPhone / iPad (Safari) first, also Android and PC. iPad and landscape screens get a two-column layout
 - UI language: Japanese
 
 ## 2. Feature list
@@ -24,7 +26,13 @@ It needs no build step, server, or external audio files. Opening it in a browser
 | Chords | Chord chart | 18 chords with diagrams, tap to hear them |
 | | Chord-change practice | Pick chords and they switch every 2/4/8 beats in time with the metronome; shows a preview of the next chord and can play each chord automatically |
 | | **Chord check (optional)** | Turned on with a switch. Analyzes the mic input and compares it with the notes the chord should contain |
-| Fretboard quiz | Note-name quiz | Range of frets 0–5 or 0–12, ♯/♭ on or off; tracks score, streak, and best streak |
+| Fretboard | Note-name quiz | Range of frets 0–5 or 0–12, ♯/♭ on or off; tracks score, streak, and best streak |
+| | Find-the-note mode | "Tap C on the 3rd string": answer by tapping the fretboard |
+| | Scale / virtual fretboard | Minor/major pentatonic, blues, major, natural minor, chord tones; note names or degrees; tap to play; scale playback lights up positions |
+| Training (no guitar needed) | Interval ear training | 5 / 8 / 12 intervals, ascending / descending / harmonic |
+| | Chord-quality ear training | Major/minor → +7, maj7, m7 → +sus4, dim; strum or arpeggio |
+| | Rhythm tapping | Tap with the click; shows offset in ms, average, spread, % within ±30 ms; quarter / 8th / triplet grid; optional "2 bars on, 2 bars silent" |
+| | Chord-form quiz | See a diagram, pick the name (confusable chords are preferred as distractors) |
 
 ## 3. Technical design
 
@@ -35,6 +43,19 @@ It needs no build step, server, or external audio files. Opening it in a browser
 - **Scheduling**: a look-ahead scheduler (`scheduler()`, runs every 25 ms and schedules 120 ms ahead).
   - Screen updates are synced with `setTimeout` and sent to everything registered in `M.listeners`.
   - Chord-change practice also registers itself in `M.listeners`, so it shares the metronome.
+
+### iPhone / iPad
+- `ac()` creates the AudioContext lazily and resumes it from any non-running state (iOS also uses `interrupted`).
+- `unlockAudio()` plays a silent buffer in the first `touchend`/`pointerup`, which iOS requires.
+- `navigator.audioSession.type` (iOS 16.4+): `playback` normally (sound plays even with the silent switch on),
+  `play-and-record` while the mic is in use.
+- `scheduler()` skips ahead if `M.next` fell behind (e.g. after returning from background) so clicks are not fired in a burst.
+- Wake Lock (`keepAwake(who, on)`) keeps the screen on while the metronome or mic is running.
+- CSS: safe-area insets, 16px selects (prevents iOS focus zoom), `touch-action: manipulation`,
+  `[hidden]{display:none!important}` (needed because many elements set `display`).
+- PWA: `manifest.webmanifest` + `sw.js` (network-first for the page, cache-first for everything else).
+  The service worker registers only on https/localhost. Bump `VERSION` in `sw.js` when releasing.
+- iOS users who are not in standalone mode see a one-time "Add to Home Screen" hint.
 
 ### Mic (shared)
 - `ensureMic(user)` / `releaseMic(user)`: the tuner and the chord check share one mic stream.
@@ -58,10 +79,19 @@ It needs no build step, server, or external audio files. Opening it in a browser
 - The notes each chord should contain are worked out automatically from the fingering in the diagram (`chordPcs()`).
 - In follow mode, the result is reset whenever the chord changes (`judgeReset()`).
 
+### Training tab
+- `makeQuiz(o)`: shared quiz engine (score, streak, best streak saved as `gtr_best_<key>`).
+  `o` provides `choices()`, `make(prev)`, `prompt`, `play(q)`, `explain(q)`, `after(q)`, `delay`.
+- Rhythm: `scheduler()` records scheduled beat times in `M.times` and skips clicks where `M.mute(n)` is true.
+  `tapAudioTime(e)` maps the pointer event's `timeStamp` to audio time with `getOutputTimestamp()`
+  (falls back to `currentTime - outputLatency`), then `rhythmTap()` finds the nearest grid point.
+- Fretboard: `boardSVG(marks)` draws any fretboard with markers, `boardHit(svg, e)` turns a tap into `{s, f}`.
+
 ### Data
 - `CHORDS`: frets listed from the 6th string to the 1st, with -1 meaning muted. Barre chords are written as `{f:[...], barre:[fret, starting string index]}`.
 - `OPEN = [40,45,50,55,59,64]`: MIDI numbers of the open strings (6th string to 1st).
-- `localStorage` key `gtr_best` stores only the best streak, wrapped in try/catch.
+- `localStorage` (via `Store.get/set`, keys prefixed `gtr_`, all wrapped in try/catch) stores the best streaks,
+  BPM, time signature, selected chords and most select/checkbox settings (`persist(id)`).
 
 ## 4. Testing
 
@@ -70,7 +100,11 @@ It needs no build step, server, or external audio files. Opening it in a browser
   - C played, judged against C → OK
   - G or Am played, judged against C → wrong, with the missing and extra notes named correctly
   - 2nd string left open on a C chord → B correctly reported as an extra note
-- **Not yet tested**: mic input from a real guitar, and behavior on real devices (iOS Safari / Android Chrome)
+- iPhone 13 / iPad Pro 11 emulation in Playwright (Chromium): every tab and training mode, no console errors
+- Rhythm timing math: taps injected at 0 / +40 / −25 ms and on an off-beat 8th were measured exactly
+- **Not yet tested**: mic input from a real guitar, and behavior on real devices (iOS Safari / Android Chrome).
+  On a real iPhone, check: sound with the silent switch on, the mic tuner, and whether rhythm offsets look biased
+  (Bluetooth earphones add a lot of latency, so wired earphones or the speaker are better for the rhythm mode)
 
 ## 5. Known limitations and caveats
 
@@ -88,9 +122,10 @@ It needs no build step, server, or external audio files. Opening it in a browser
 The app has no licensing issues (the sound is synthesized, the code is the user's own, and Google Fonts are under the OFL), so it can be published.
 
 1. Create a **public** repository on GitHub (required for Pages on the free plan).
-2. Upload `guitar-practice.html` as `index.html`.
+2. Upload `index.html`, `manifest.webmanifest`, `sw.js` and the `icons/` folder.
 3. In Settings → Pages, choose "Deploy from a branch" with `main` / `(root)`.
 4. It will be live at `https://<username>.github.io/<repository-name>/`.
+5. On iPhone / iPad, open it in Safari, then Share → "Add to Home Screen" for a full-screen app that works offline.
 
 Mic audio is analyzed only in the browser and is never sent anywhere.
 
@@ -101,8 +136,8 @@ Mic audio is analyzed only in the browser and is never sent anywhere.
 - Practice log (a calendar of daily practice time)
 - Tab-reading practice mode
 - More realistic sound using recorded samples (CC0 from Freesound, etc.)
-- Save settings such as BPM and selected chords in localStorage
-- Prevent the screen from sleeping during practice (Wake Lock API)
+- Latency calibration for the rhythm mode (useful with Bluetooth earphones)
+- Rhythm patterns beyond a straight grid (e.g. syncopation reading)
 
 ## 8. Resuming in a new Claude Code session
 
@@ -111,4 +146,4 @@ Give Claude `guitar-practice.html` along with this document and ask something li
 > "Read HANDOFF.md and guitar-practice.html, then add [the feature you want]."
 
 The code is a single file split into sections marked by `/* ---------- section name ---------- */` comments
-(shared audio / tabs / metronome / tuner / chords / chord check / fretboard quiz).
+(shared audio / settings / wake lock / tabs / metronome / tuner / chords / chord check / fretboard / training / PWA).
