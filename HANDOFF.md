@@ -26,7 +26,8 @@ It needs no build step, server, or external audio files. Opening it in a browser
 | | Tempo-up practice | Adds +2/+5/+10 BPM every 2/4/8 bars |
 | Tuner | Reference tones | Tap a string for its open-string pitch, with an optional repeat |
 | | Mic tuner | Shows the note name, Hz, and how many cents off it is |
-| Chords | Chord chart | 18 chords with diagrams, tap to hear them |
+| Chords | Chord chart | 23 chords with diagrams, tap to hear them |
+| | Play along | Pick key, progression and strumming pattern; the backing loops with a one-bar count-in while the current/next chord and stroke arrows are highlighted. Capo support: shows the shapes to finger and sounds the real key; "recommended capo" picks the position with the easiest shapes |
 | | Chord-change practice | Pick chords and they switch every 2/4/8 beats in time with the metronome; shows a preview of the next chord and can play each chord automatically |
 | | **Chord check (optional)** | Turned on with a switch. Analyzes the mic input and compares it with the notes the chord should contain |
 | Fretboard | Note-name quiz | Range of frets 0–5 or 0–12, ♯/♭ on or off; tracks score, streak, and best streak |
@@ -109,6 +110,14 @@ It needs no build step, server, or external audio files. Opening it in a browser
   interacted within the last minute or the metronome / mic / a lesson demo is running.
 - Features report activity with `Log.count(kind)`; `MENU` (in the learn section) turns the counters into
   the daily checklist, and `renderHome()` draws the card, calendar and menu.
+
+### Play along / capo
+- `PROGS` and `STRUM_PATS` are shared by the lessons and the play-along card.
+- `paData()` derives the shape key from the real key and capo (`keyByPc(realPc - capo)`), so the diagrams show
+  what to finger while `paSound()` raises every string by the capo (`frets + capo`) to sound the real key.
+- The "recommended capo" button scores capo 0–7 by how many chords have a fingering in `CHORDS`, with a small
+  penalty for barre chords and higher capo positions.
+- `Seq` now holds a wake lock while playing; play-along time counts toward the daily "chord changes" task.
 
 ### Data
 - `CHORDS`: frets listed from the 6th string to the 1st, with -1 meaning muted. Barre chords are written as `{f:[...], barre:[fret, starting string index]}`.

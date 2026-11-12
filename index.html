@@ -211,6 +211,11 @@ button:disabled{opacity:.4}
 @media (max-width:420px){ nav button{font-size:10px} .dia7 button b{font-size:11px} }
 @media (min-width:760px){ #learnHome,#lessonView{max-width:780px;width:100%;justify-self:center} .lesson p{font-size:16px} }
 
+/* 曲に合わせて弾く */
+.painfo{margin:10px 0 0;line-height:1.7}
+.painfo b{color:#ffd9a0}
+.nodia{display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:14px 4px;margin:6px auto;line-height:1.6}
+
 /* ホーム：練習記録 */
 .homecards{display:block}
 .streak{font-size:14px;color:var(--accent)}
@@ -358,6 +363,30 @@ button:disabled{opacity:.4}
     <p class="muted" style="margin:8px 0 0;text-align:center">テンポはメトロノームタブで変更できます（現在 <span id="bpmMirror">90</span> BPM）</p>
   </div>
   <div class="card">
+    <h2>🎵 曲に合わせて弾く</h2>
+    <p class="muted" style="margin:0 0 10px">コード進行とストロークを選ぶと、伴奏がループします。画面のコードと矢印に合わせて弾きましょう。ギターがなくても、腕を振りながら聞くだけで練習になります。</p>
+    <div class="row">
+      <label class="muted">キー <select id="paKey"></select></label>
+      <label class="muted">カポ <select id="paCapo"><option value="0">なし</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
+      <button id="paAuto">おすすめカポ</button>
+    </div>
+    <div class="row" style="margin-top:8px"><select id="paProg" class="grow"></select></div>
+    <div class="row" style="margin-top:8px"><select id="paPat" class="grow"></select></div>
+    <div class="painfo muted" id="paInfo"></div>
+    <div class="practice">
+      <div class="cur"><div class="nm" id="paCurName">—</div><div id="paCurDia"></div></div>
+      <div class="nxt"><div class="muted">次</div><div class="nm" id="paNxtName">—</div><div id="paNxtDia"></div></div>
+    </div>
+    <div class="progrow" id="paRow"></div>
+    <div class="strokes" id="paCells"></div>
+    <div class="row" style="margin:10px 0">
+      <label class="chk"><input type="checkbox" id="paGuide" checked>伴奏を鳴らす</label>
+      <label class="chk"><input type="checkbox" id="paClick" checked>クリック</label>
+    </div>
+    <button class="primary bigbtn" id="paBtn">▶ スタート</button>
+    <p class="muted" style="margin:8px 0 0;text-align:center">最初に1小節カウントが入ります。テンポはメトロノームタブの BPM です。</p>
+  </div>
+  <div class="card">
     <div class="row" style="justify-content:space-between">
       <h2 style="margin:0">🎤 コード判定 <span class="opt">オプション</span></h2>
       <label class="switch"><input type="checkbox" id="judgeOn"><span></span></label>
@@ -486,7 +515,7 @@ button:disabled{opacity:.4}
     <div style="display:flex;justify-content:center" id="fmDia"></div>
     <div class="answers" id="fmAns"></div>
     <div class="row" style="margin-top:12px">
-      <select id="fmPool"><option value="all">全18コード</option><option value="sel">コードタブで選んだコード</option></select>
+      <select id="fmPool"><option value="all">すべてのコード</option><option value="sel">コードタブで選んだコード</option></select>
       <label class="chk"><input type="checkbox" id="fmSound" checked>答えたら鳴らす</label>
       <span class="grow"></span><button id="fmSkip">スキップ</button>
     </div>
@@ -565,7 +594,7 @@ const Log = {
     const busy = M.running || Mic.users.size > 0 || (typeof Seq !== 'undefined' && Seq.btn);
     if(!busy && Date.now() - this.lastAct > 60000) return;
     const t = this.today(); t.sec += 5;
-    if(M.running && chordMode) t.chord = (t.chord||0) + 5;
+    if((M.running && chordMode) || (typeof Seq !== 'undefined' && Seq.btn && Seq.btn.id === 'paBtn')) t.chord = (t.chord||0) + 5;
     this.save();
   },
   streak(){
@@ -853,7 +882,9 @@ const CHORDS = {
   'Am':[-1,0,2,2,1,0], 'Dm':[-1,-1,0,2,3,1], 'Em':[0,2,2,0,0,0],
   'F':{f:[1,3,3,2,1,1], barre:[1,0]}, 'Bm':{f:[-1,2,4,4,3,2], barre:[2,1]},
   'C7':[-1,3,2,3,1,0], 'D7':[-1,-1,0,2,1,2], 'E7':[0,2,0,1,0,0], 'G7':[3,2,0,0,0,1], 'A7':[-1,0,2,0,2,0], 'B7':[-1,2,1,2,0,2],
-  'Fmaj7':[-1,-1,3,2,1,0], 'Cmaj7':[-1,3,2,0,0,0]
+  'Fmaj7':[-1,-1,3,2,1,0], 'Cmaj7':[-1,3,2,0,0,0],
+  'Am7':[-1,0,2,0,1,0], 'Em7':[0,2,0,0,0,0], 'Dm7':[-1,-1,0,2,1,1],
+  'B':{f:[-1,2,4,4,4,2], barre:[2,1]}, 'F♯m':{f:[2,4,4,2,2,2], barre:[2,0]}
 };
 const chordFrets = n => Array.isArray(CHORDS[n]) ? CHORDS[n] : CHORDS[n].f;
 function diagram(name, w=96){
@@ -1447,13 +1478,13 @@ function playChord(root, ty, t, up){
 const Seq = { timers:[], btn:null, label:'', onStop:null,
   stop(){
     this.timers.forEach(clearTimeout); this.timers = [];
-    if(this.btn){ this.btn.textContent = this.label; this.btn.classList.remove('on'); this.btn = null; }
+    if(this.btn){ this.btn.textContent = this.label; this.btn.classList.remove('on'); this.btn = null; keepAwake('seq', false); }
     if(this.onStop){ const f = this.onStop; this.onStop = null; f(); }
   },
   // n ステップを len 秒ごとに。fn(i, t) で音を予約、ui(i) で表示を更新
   play(btn, n, len, fn, ui, loop, onStop){
     if(this.btn === btn){ this.stop(); return; }
-    this.stop(); this.btn = btn; this.label = btn.textContent; btn.textContent = '■ 停止'; btn.classList.add('on'); this.onStop = onStop || null;
+    this.stop(); keepAwake('seq', true); this.btn = btn; this.label = btn.textContent; btn.textContent = '■ 停止'; btn.classList.add('on'); this.onStop = onStop || null;
     const c = ac(), t0 = c.currentTime + 0.12; let k = 0;
     const step = ()=>{
       if(this.timers.length > 60) this.timers.splice(0, 40);
@@ -1496,6 +1527,15 @@ function mkQ(q, ok, wrongs, why){
   const opts = shuffle([ok, ...[...new Set(wrongs)].filter(w=>w!==ok).slice(0,3)]);
   return { q, opts, a: opts.indexOf(ok), why };
 }
+
+// 定番のコード進行（度数は0始まり。3つ目が true ならすべてセブンスで弾く）
+const PROGS = [
+  ['I – V – vi – IV（ポップスの大定番）',[0,4,5,3]], ['I – IV – V – I（スリーコード）',[0,3,4,0]], ['I – vi – IV – V（50年代・循環コード）',[0,5,3,4]],
+  ['IV – V – iii – vi（王道進行）',[3,4,2,5]], ['vi – IV – V – I（小室進行）',[5,3,4,0]], ['I – V – vi – iii – IV – I – IV – V（カノン進行）',[0,4,5,2,3,0,3,4]],
+  ['12小節ブルース（セブンスで）',[0,0,0,0,3,3,0,0,4,3,0,4],true]
+];
+// ストロークパターン（8分音符×8。D=ダウン、U=アップ、.=空振り）
+const STRUM_PATS = [['4分音符','D.D.D.D.'],['8分音符','DUDUDUDU'],['裏を抜く','D.DUD.DU'],['定番ストローク','D.DU.UDU']];
 
 // --- レッスン定義 ---
 const LESSONS = [
@@ -1586,7 +1626,7 @@ const LESSONS = [
   <div class="point">ポイント：4/4拍子＝1小節に4拍／腕は8分で振り続ける／表はダウン、裏はアップ</div>
   <div class="row"><button data-go="rhythm">🥁 リズム練習でタップしてみる →</button></div>`,
   init(el){
-    const PATS = [['4分音符','D.D.D.D.'],['8分音符','DUDUDUDU'],['裏を抜く','D.DUD.DU'],['定番ストローク','D.DU.UDU']];
+    const PATS = STRUM_PATS;
     const chips = el.querySelector('[data-w=pats]'), cells = el.querySelector('[data-w=cells]'); let p = 3;
     el.querySelector('[data-w=bpm]').textContent = M.bpm;
     const draw = cur => { cells.innerHTML = [...PATS[p][1]].map((c,i)=>`<div class="${i===cur?'cur':''}${c==='.'?' rest':''}"><b>${c==='D'?'↓':c==='U'?'↑':'・'}</b><span>${i%2 ? 'と' : i/2+1}</span></div>`).join('');
@@ -1770,11 +1810,6 @@ const LESSONS = [
   <p>初心者には <b>キー G</b>（G・C・D・Em）と <b>キー C</b>（C・F・G・Am）がおすすめ。F は少し難しいので、最初は Fmaj7 で代用してもOKです。</p>
   <div class="point">ポイント：進行はローマ数字で覚える／I–V–vi–IV はポップスの大定番／キーを変えるのは同じ進行の高さを変えるだけ</div>`,
   init(el){
-    const PROGS = [
-      ['I – V – vi – IV（ポップスの大定番）',[0,4,5,3]], ['I – IV – V – I（スリーコード）',[0,3,4,0]], ['I – vi – IV – V（50年代・循環コード）',[0,5,3,4]],
-      ['IV – V – iii – vi（王道進行）',[3,4,2,5]], ['vi – IV – V – I（小室進行）',[5,3,4,0]], ['I – V – vi – iii – IV – I – IV – V（カノン進行）',[0,4,5,2,3,0,3,4]],
-      ['12小節ブルース（セブンスで）',[0,0,0,0,3,3,0,0,4,3,0,4],true]
-    ];
     const ks = el.querySelector('[data-w=key]'), ps = el.querySelector('[data-w=prog]'), row = el.querySelector('[data-w=row]'), note = el.querySelector('[data-w=note]');
     ps.innerHTML = PROGS.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('');
     el.querySelector('[data-w=bpm]').textContent = M.bpm;
@@ -1980,6 +2015,72 @@ function openLesson(i){
 persist('goalMin');
 $('goalMin').addEventListener('change', ()=>renderHome());
 renderLessonList(); renderHome();
+
+/* ---------- 曲に合わせて弾く（カポ対応） ---------- */
+// カポ c のとき「押さえるフォームのキー」は、実際のキーより半音 c 個ぶん低い
+const keyByPc = pc => KEYS.find(k=> parseNote(k).pc === ((pc%12)+12)%12);
+const progChords = (key, p) => { const d = diatonic(key);
+  return p[1].map(i=> p[2] ? { root:d[i].root, ty:'7', name:d[i].root+'7', roman:ROMAN[i].toUpperCase()+'7' } : d[i]); };
+const PA = { bar:-1 };
+$('paKey').innerHTML = keyOpts(KEYS, 'G');
+$('paProg').innerHTML = PROGS.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('');
+$('paPat').innerHTML = STRUM_PATS.map((p,i)=>`<option value="${i}">ストローク：${p[0]}（${[...p[1]].map(c=>c==='D'?'↓':c==='U'?'↑':'・').join('')}）</option>`).join('');
+$('paPat').value = 3;
+['paKey','paCapo','paProg','paPat','paGuide','paClick'].forEach(persist);
+function paData(){
+  const real = $('paKey').value, capo = +$('paCapo').value, p = PROGS[+$('paProg').value];
+  const shapeKey = keyByPc(parseNote(real).pc - capo);
+  return { real, capo, shapeKey, shapes: progChords(shapeKey, p), reals: progChords(real, p), pat: STRUM_PATS[+$('paPat').value][1] };
+}
+function paDia(c, w){ return CHORDS[c.name] ? diagram(c.name, w) : `<div class="nodia" style="width:${w}px">フォーム未収録<br>${chordNotes(c.root, c.ty).join('・')}</div>`; }
+function paDraw(bar=-1, slot=-1){
+  const d = paData(), n = d.shapes.length, i = bar < 0 ? 0 : bar % n, cur = d.shapes[i], nxt = d.shapes[(i+1)%n];
+  if(bar !== PA.bar || slot < 0){
+    PA.bar = bar;
+    $('paCurName').textContent = cur.name; $('paCurDia').innerHTML = paDia(cur, 120);
+    $('paNxtName').textContent = nxt.name; $('paNxtDia').innerHTML = paDia(nxt, 64);
+    $('paRow').innerHTML = d.shapes.map((c,k)=>`<div class="${bar>=0 && k===i?'cur':''}"><small>${c.roman}${d.capo ? ' ＝ '+d.reals[k].name : ''}</small><b>${c.name}</b></div>`).join('');
+    const have = new Set(d.shapes.map(c=>c.name).filter(nm=>CHORDS[nm])).size, all = new Set(d.shapes.map(c=>c.name)).size;
+    $('paInfo').innerHTML = (d.capo ? `カポ ${d.capo}：<b>キー ${d.shapeKey} のフォーム</b>で弾くと、実際の音はキー ${d.real} になります。` : `キー ${d.real}（カポなし）`) +
+      (have < all ? ` フォーム未収録のコードが ${all-have} 個あります。「おすすめカポ」を試してみてください。` : '');
+  }
+  $('paCells').innerHTML = [...d.pat].map((c,k)=>`<div class="${k===slot?'cur':''}${c==='.'?' rest':''}"><b>${c==='D'?'↓':c==='U'?'↑':'・'}</b><span>${k%2 ? 'と' : k/2+1}</span></div>`).join('');
+}
+// フォームがコード表にあるコードがいちばん多くなるカポ位置を選ぶ
+$('paAuto').onclick = ()=>{
+  const real = $('paKey').value, p = PROGS[+$('paProg').value]; let best = 0, bestScore = -1;
+  for(let c=0; c<=7; c++){
+    const names = [...new Set(progChords(keyByPc(parseNote(real).pc - c), p).map(x=>x.name))];
+    const score = names.filter(nm=>CHORDS[nm]).length / names.length - c*0.001 - names.filter(nm=>CHORDS[nm] && !Array.isArray(CHORDS[nm])).length*0.05; // バレーコードは少し減点
+    if(score > bestScore){ bestScore = score; best = c; }
+  }
+  $('paCapo').value = best; $('paCapo').dispatchEvent(new Event('change'));
+};
+['paKey','paCapo','paProg','paPat'].forEach(id=> $(id).addEventListener('change', ()=>{ Seq.stop(); paDraw(); }));
+function paSound(d, i, t, up){
+  const sh = d.shapes[i], re = d.reals[i];
+  if(CHORDS[sh.name]) strum(chordFrets(sh.name).map(f=> f<0 ? f : f + d.capo), t, up); // カポのぶん全弦を上げる
+  else playChord(re.root, re.ty, t, up);
+}
+$('paBtn').onclick = e =>{
+  const d = paData(), n = d.shapes.length, q = []; let g = 0;
+  if(M.running) stopMetro();
+  Seq.play(e.currentTarget, 8, 30 / M.bpm, (_, t)=>{
+    const step = g++, slot = step % 8, bar = Math.floor(step / 8) - 1; // 最初の1小節はカウント
+    if(bar < 0){ if(slot % 2 === 0) clickSound(t, true); }
+    else {
+      if($('paClick').checked && slot % 2 === 0) clickSound(t, slot === 0);
+      const c = d.pat[slot];
+      if($('paGuide').checked && c !== '.') paSound(d, bar % n, t, c === 'U');
+    }
+    q.push([bar, slot]);
+  }, ()=>{ const [bar, slot] = q.shift();
+    if(bar < 0){ $('paCurName').textContent = slot % 2 === 0 ? `カウント ${slot/2+1}` : $('paCurName').textContent; paDrawCells(slot); }
+    else paDraw(bar, slot);
+  }, true, ()=>paDraw());
+};
+function paDrawCells(slot){ $('paCells').querySelectorAll('div').forEach((el,k)=> el.classList.toggle('cur', k===slot)); }
+paDraw();
 
 /* ---------- 前回開いていたタブを復元（初回は「学ぶ」から） ---------- */
 { const t = Store.get('tab', 'learn'); gotoTab(document.getElementById('tab-'+t) ? t : 'learn'); }
