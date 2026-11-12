@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ギター練習アプリ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1b1612; --panel:#262019; --panel2:#30281f; --line:#4a3d2f;
+  --text:#f3e9dc; --muted:#b3a28c; --accent:#f0a33a; --accent2:#e2683c;
+  --ok:#6cc48a; --ng:#e25c5c;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans JP",system-ui,sans-serif}
+body{padding:env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom))}
+header{padding:16px 18px 6px;display:flex;align-items:baseline;gap:10px}
+header h1{font-size:20px;margin:0;font-weight:900;letter-spacing:.02em}
+header span{color:var(--muted);font-size:12px}
+main{max-width:560px;margin:0 auto;padding:0 14px}
+section.tab{display:none}
+section.tab.active{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--accent)}
+.muted{color:var(--muted);font-size:13px;line-height:1.6}
+button{font-family:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:15px;cursor:pointer;touch-action:manipulation}
+button:active{transform:scale(.97)}
+button.primary{background:var(--accent);color:#2a1a08;border-color:var(--accent);font-weight:700}
+button.primary.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1}
+select{font-family:inherit;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:15px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+label.chk{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+
+/* nav */
+nav{position:fixed;left:0;right:0;bottom:0;background:#14100d;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:10}
+nav button{flex:1;background:none;border:0;border-radius:0;padding:10px 0 12px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button .ic{font-size:20px;line-height:1}
+nav button.active{color:var(--accent)}
+
+/* metronome */
+.bpm{font-size:72px;font-weight:900;text-align:center;line-height:1;margin:4px 0 0;font-variant-numeric:tabular-nums}
+.bpm small{display:block;font-size:13px;color:var(--muted);font-weight:400;margin-top:6px}
+.dots{display:flex;justify-content:center;gap:12px;margin:18px 0}
+.dot{width:22px;height:22px;border-radius:50%;background:var(--panel2);border:2px solid var(--line);transition:background .05s}
+.dot.first{border-color:var(--accent)}
+.dot.hit{background:var(--accent)}
+.dot.first.hit{background:var(--accent2)}
+.bigbtn{width:100%;padding:16px;font-size:18px}
+
+/* tuner */
+.strings{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.strings button{padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:2px}
+.strings button b{font-size:20px}
+.strings button small{font-size:10px;color:var(--muted)}
+.strings button.sel{border-color:var(--accent);background:#3a2c1a}
+.meter{position:relative;height:56px;background:var(--panel2);border-radius:12px;overflow:hidden;margin:12px 0 6px}
+.meter .center{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--ok);opacity:.6}
+.meter .needle{position:absolute;top:8px;bottom:8px;width:6px;margin-left:-3px;border-radius:3px;background:var(--muted);left:50%;transition:left .1s}
+.meter .needle.good{background:var(--ok)}
+.tnote{font-size:44px;font-weight:900;text-align:center}
+.tsub{text-align:center;color:var(--muted);font-size:13px;min-height:18px}
+
+/* chords */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 12px;border-radius:999px;font-size:14px}
+.chip.on{background:var(--accent);color:#2a1a08;border-color:var(--accent);font-weight:700}
+.chordgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chordcell{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:6px 4px 2px;text-align:center;cursor:pointer}
+.chordcell:active{border-color:var(--accent)}
+.chordcell .nm{font-weight:700;font-size:15px}
+.practice{display:flex;gap:10px;align-items:center;justify-content:center;margin:8px 0}
+.practice .cur{text-align:center}
+.practice .cur .nm{font-size:34px;font-weight:900;color:var(--accent)}
+.practice .nxt{text-align:center;opacity:.55}
+.practice .nxt .nm{font-size:18px;font-weight:700}
+svg text{font-family:"Noto Sans JP",sans-serif}
+
+/* chord judge */
+.opt{font-size:10px;font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px;vertical-align:middle;margin-left:4px}
+.switch{position:relative;width:48px;height:28px;display:inline-block}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:var(--panel2);border:1px solid var(--line);border-radius:999px;transition:.2s}
+.switch span::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:.2s}
+.switch input:checked + span{background:var(--accent);border-color:var(--accent)}
+.switch input:checked + span::after{left:23px;background:#2a1a08}
+.chroma{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;align-items:end;height:110px;padding-top:6px}
+.chroma .col{display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.chroma .bar{width:100%;border-radius:4px 4px 0 0;background:#5a4530;min-height:2px;transition:height .08s}
+.chroma .col.tone .bar{background:var(--accent)}
+.chroma .col.tone.miss .bar{background:var(--ng)}
+.chroma .col.extra .bar{background:#8e6fd1}
+.chroma .lb{font-size:10px;color:var(--muted)}
+.chroma .col.tone .lb{color:var(--accent);font-weight:700}
+.jresult{text-align:center;font-size:22px;font-weight:900;margin-top:10px;min-height:30px}
+.jresult.ok{color:var(--ok)} .jresult.ng{color:var(--ng)}
+.jsub{text-align:center;min-height:20px}
+.judge-badge{text-align:center;font-weight:700;font-size:15px;padding:6px;border-radius:10px;background:var(--panel2)}
+.judge-badge.ok{color:var(--ok)} .judge-badge.ng{color:var(--ng)}
+
+/* fretboard quiz */
+.fb{width:100%;display:block;margin:6px 0}
+.answers{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.answers button{padding:12px 0;font-size:16px;font-weight:700}
+.answers button.ok{background:var(--ok);border-color:var(--ok);color:#10220f}
+.answers button.ng{background:var(--ng);border-color:var(--ng);color:#fff}
+.score{display:flex;justify-content:space-around;text-align:center;margin-bottom:4px}
+.score b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+.score span{font-size:11px;color:var(--muted)}
+.qtext{text-align:center;font-size:15px;margin:4px 0;min-height:22px}
+</style>
+</head>
+<body>
+<header><h1>🎸 ギター練習</h1><span>メトロノーム・チューナー・コード・指板</span></header>
+<main>
+
+<!-- ===== メトロノーム ===== -->
+<section class="tab active" id="tab-metro">
+  <div class="card">
+    <div class="bpm"><span id="bpmVal">90</span><small>BPM</small></div>
+    <div class="dots" id="dots"></div>
+    <div class="row" style="margin-bottom:10px">
+      <button data-d="-5">−5</button><button data-d="-1">−1</button>
+      <input class="grow" type="range" id="bpmRange" min="30" max="240" value="90">
+      <button data-d="1">+1</button><button data-d="5">+5</button>
+    </div>
+    <div class="row" style="margin-bottom:14px">
+      <label class="muted">拍子
+        <select id="beats"><option>2</option><option>3</option><option selected>4</option><option>6</option></select>
+      </label>
+      <label class="chk"><input type="checkbox" id="accent" checked>1拍目を強調</label>
+      <span class="grow"></span>
+      <button id="tap">タップ</button>
+    </div>
+    <button class="primary bigbtn" id="metroBtn">▶ スタート</button>
+  </div>
+  <div class="card">
+    <h2>テンポアップ練習</h2>
+    <p class="muted" style="margin:0 0 10px">指定した小節ごとにBPMを少しずつ上げます。速いフレーズを無理なく体に入れる練習に。</p>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="rampOn">オン</label>
+      <select id="rampBars"><option value="2">2小節ごとに</option><option value="4" selected>4小節ごとに</option><option value="8">8小節ごとに</option></select>
+      <select id="rampStep"><option value="2">+2</option><option value="5" selected>+5</option><option value="10">+10</option></select>
+    </div>
+  </div>
+</section>
+
+<!-- ===== チューナー ===== -->
+<section class="tab" id="tab-tuner">
+  <div class="card">
+    <h2>基準音で合わせる</h2>
+    <p class="muted" style="margin:0 0 10px">弦をタップすると開放弦の音が鳴ります。「くり返し」をオンにすると鳴らし続けます。</p>
+    <div class="strings" id="strings"></div>
+    <div class="row" style="margin-top:10px">
+      <label class="chk"><input type="checkbox" id="repeat">くり返し</label>
+    </div>
+  </div>
+  <div class="card">
+    <h2>マイクで測る</h2>
+    <div class="tnote" id="tNote">—</div>
+    <div class="meter"><div class="center"></div><div class="needle" id="needle"></div></div>
+    <div class="tsub" id="tSub">−50¢ ← → +50¢</div>
+    <button class="primary bigbtn" id="micBtn" style="margin-top:10px">🎤 マイクをオン</button>
+    <p class="muted" id="micMsg" style="margin:8px 0 0"></p>
+  </div>
+</section>
+
+<!-- ===== コード ===== -->
+<section class="tab" id="tab-chord">
+  <div class="card">
+    <h2>コードチェンジ練習</h2>
+    <p class="muted" style="margin:0 0 8px">練習したいコードを選んでスタート。メトロノームに合わせて次々にコードが変わります。</p>
+    <div class="chips" id="chips"></div>
+    <div class="row" style="margin:12px 0">
+      <select id="perChange"><option value="2">2拍で交代</option><option value="4" selected>4拍で交代</option><option value="8">8拍で交代</option></select>
+      <label class="chk"><input type="checkbox" id="strumOn" checked>コードを鳴らす</label>
+    </div>
+    <div class="practice" id="practice">
+      <div class="cur"><div class="nm" id="curName">—</div><div id="curDia"></div></div>
+      <div class="nxt"><div class="muted">次</div><div class="nm" id="nxtName">—</div><div id="nxtDia"></div></div>
+    </div>
+    <div class="judge-badge" id="judgeBadge" hidden></div>
+    <div class="dots" id="dots2"></div>
+    <button class="primary bigbtn" id="chordBtn">▶ スタート</button>
+    <p class="muted" style="margin:8px 0 0;text-align:center">テンポはメトロノームタブで変更できます（現在 <span id="bpmMirror">90</span> BPM）</p>
+  </div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="margin:0">🎤 コード判定 <span class="opt">オプション</span></h2>
+      <label class="switch"><input type="checkbox" id="judgeOn"><span></span></label>
+    </div>
+    <div id="judgePanel" hidden>
+      <p class="muted" style="margin:10px 0">マイクで聞き取った音と、コードに含まれる音を比べます。ジャーンと鳴らしたあと、音が伸びている間に判定します。</p>
+      <div class="row" style="margin-bottom:10px">
+        <select id="judgeTarget" class="grow"></select>
+      </div>
+      <div class="chroma" id="chroma"></div>
+      <div class="jresult" id="jResult">—</div>
+      <div class="jsub muted" id="jSub"></div>
+      <p class="muted" id="judgeMsg" style="margin:8px 0 0"></p>
+    </div>
+  </div>
+  <div class="card">
+    <h2>コード表</h2>
+    <p class="muted" style="margin:0 0 10px">タップすると音が鳴ります。</p>
+    <div class="chordgrid" id="chordGrid"></div>
+  </div>
+</section>
+
+<!-- ===== 指板クイズ ===== -->
+<section class="tab" id="tab-fret">
+  <div class="card">
+    <h2>指板の音名クイズ</h2>
+    <div class="score">
+      <div><b id="sCorrect">0</b><span>正解</span></div>
+      <div><b id="sTotal">0</b><span>回答</span></div>
+      <div><b id="sStreak">0</b><span>連続</span></div>
+      <div><b id="sBest">0</b><span>最高連続</span></div>
+    </div>
+    <div class="qtext" id="qText">光っている場所の音は？</div>
+    <svg class="fb" id="fb" viewBox="0 0 372 170"></svg>
+    <div class="answers" id="answers"></div>
+    <div class="row" style="margin-top:12px">
+      <select id="qRange"><option value="5">0〜5フレット</option><option value="12" selected>0〜12フレット</option></select>
+      <label class="chk"><input type="checkbox" id="qNatural" checked>♯/♭なし</label>
+      <span class="grow"></span>
+      <button id="qSkip">スキップ</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav id="nav">
+  <button class="active" data-tab="metro"><span class="ic">⏱</span>メトロノーム</button>
+  <button data-tab="tuner"><span class="ic">🎚</span>チューナー</button>
+  <button data-tab="chord"><span class="ic">🎼</span>コード</button>
+  <button data-tab="fret"><span class="ic">🎯</span>指板クイズ</button>
+</nav>
+
+<script>
+/* ---------- 共通：音 ---------- */
+let ctx = null;
+function ac(){
+  if(!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if(ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+const midiFreq = m => 440 * Math.pow(2, (m - 69) / 12);
+const NOTE = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTE_JP = {'C':'C (ド)','D':'D (レ)','E':'E (ミ)','F':'F (ファ)','G':'G (ソ)','A':'A (ラ)','B':'B (シ)'};
+const OPEN = [40,45,50,55,59,64]; // 6弦→1弦
+
+// Karplus-Strong でギターっぽい音
+const bufCache = new Map();
+function pluckBuffer(freq){
+  const key = Math.round(freq*10);
+  if(bufCache.has(key)) return bufCache.get(key);
+  const c = ac(), sr = c.sampleRate, len = Math.floor(sr*2.2);
+  const buf = c.createBuffer(1, len, sr), d = buf.getChannelData(0);
+  const N = Math.max(2, Math.round(sr/freq)), ring = new Float32Array(N);
+  for(let i=0;i<N;i++) ring[i] = Math.random()*2-1;
+  let idx = 0;
+  for(let i=0;i<len;i++){
+    const cur = ring[idx], nx = ring[(idx+1)%N];
+    ring[idx] = 0.497*(cur+nx);
+    d[i] = cur; idx = (idx+1)%N;
+  }
+  bufCache.set(key, buf);
+  return buf;
+}
+function pluck(freq, t, vol=0.45){
+  const c = ac(); t = t ?? c.currentTime;
+  const s = c.createBufferSource(), g = c.createGain();
+  s.buffer = pluckBuffer(freq);
+  g.gain.setValueAtTime(vol, t);
+  g.gain.setTargetAtTime(0, t+1.6, 0.15);
+  s.connect(g).connect(c.destination);
+  s.start(t); s.stop(t+2.2);
+}
+function strum(frets){
+  const t0 = ac().currentTime + 0.01;
+  let k = 0;
+  frets.forEach((f,i)=>{ if(f>=0){ pluck(midiFreq(OPEN[i]+f), t0 + k*0.025, 0.28); k++; } });
+}
+
+/* ---------- タブ ---------- */
+document.querySelectorAll('#nav button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active', x===b));
+    document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('active', s.id==='tab-'+b.dataset.tab));
+    window.scrollTo(0,0);
+  };
+});
+
+/* ---------- メトロノーム ---------- */
+const M = { bpm:90, beats:4, accent:true, running:false, next:0, beat:0, count:0, timer:null, listeners:[] };
+const $ = id => document.getElementById(id);
+
+function clickSound(t, strong){
+  const c = ac(), o = c.createOscillator(), g = c.createGain();
+  o.frequency.value = strong ? 1600 : 1000;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(strong ? 0.7 : 0.4, t+0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+0.05);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t+0.06);
+}
+function scheduler(){
+  const c = ac();
+  while(M.next < c.currentTime + 0.12){
+    const b = M.beat, n = M.count, t = M.next;
+    clickSound(t, b===0 && M.accent);
+    setTimeout(()=>M.listeners.forEach(f=>f(b,n)), Math.max(0,(t-c.currentTime)*1000));
+    M.next += 60 / M.bpm;
+    M.beat = (b+1) % M.beats;
+    M.count++;
+    // テンポアップ
+    if(M.beat===0 && $('rampOn').checked){
+      const bars = M.count / M.beats;
+      if(bars>0 && bars % (+$('rampBars').value) === 0) setTimeout(()=>setBpm(M.bpm + +$('rampStep').value), 0);
+    }
+  }
+}
+function startMetro(){
+  if(M.running) return;
+  const c = ac();
+  M.running = true; M.beat = 0; M.count = 0; M.next = c.currentTime + 0.08;
+  M.timer = setInterval(scheduler, 25); scheduler();
+  updateButtons();
+}
+function stopMetro(){
+  M.running = false; clearInterval(M.timer);
+  chordMode = false;
+  const jb = document.getElementById('judgeBadge'); if(jb) jb.hidden = true;
+  document.querySelectorAll('.dot').forEach(d=>d.classList.remove('hit'));
+  updateButtons();
+}
+function updateButtons(){
+  const mb = $('metroBtn'), cb = $('chordBtn');
+  mb.textContent = M.running ? '■ ストップ' : '▶ スタート'; mb.classList.toggle('on', M.running);
+  cb.textContent = (M.running && chordMode) ? '■ ストップ' : '▶ スタート'; cb.classList.toggle('on', M.running && chordMode);
+}
+function setBpm(v){
+  M.bpm = Math.max(30, Math.min(240, Math.round(v)));
+  $('bpmVal').textContent = M.bpm; $('bpmRange').value = M.bpm; $('bpmMirror').textContent = M.bpm;
+}
+function buildDots(){
+  ['dots','dots2'].forEach(id=>{
+    $(id).innerHTML = Array.from({length:M.beats},(_,i)=>`<div class="dot${i===0?' first':''}"></div>`).join('');
+  });
+}
+M.listeners.push(b=>{
+  ['dots','dots2'].forEach(id=>{
+    const ds = $(id).children;
+    for(let i=0;i<ds.length;i++) ds[i].classList.toggle('hit', i===b);
+  });
+});
+$('metroBtn').onclick = ()=> M.running ? stopMetro() : startMetro();
+$('bpmRange').oninput = e => setBpm(+e.target.value);
+document.querySelectorAll('[data-d]').forEach(b=> b.onclick = ()=> setBpm(M.bpm + +b.dataset.d));
+$('beats').onchange = e => { M.beats = +e.target.value; M.beat = 0; buildDots(); };
+$('accent').onchange = e => M.accent = e.target.checked;
+let taps = [];
+$('tap').onclick = ()=>{
+  const now = performance.now();
+  taps = taps.filter(t => now - t < 2500); taps.push(now);
+  if(taps.length >= 2){
+    const iv = []; for(let i=1;i<taps.length;i++) iv.push(taps[i]-taps[i-1]);
+    const recent = iv.slice(-4); setBpm(60000 / (recent.reduce((a,b)=>a+b,0)/recent.length));
+  }
+};
+buildDots();
+
+/* ---------- チューナー ---------- */
+const STR_NAMES = [['E','6弦'],['A','5弦'],['D','4弦'],['G','3弦'],['B','2弦'],['E','1弦']];
+let selString = -1, repTimer = null;
+$('strings').innerHTML = STR_NAMES.map((s,i)=>`<button data-s="${i}"><b>${s[0]}</b><small>${s[1]}</small></button>`).join('');
+function playString(i){ pluck(midiFreq(OPEN[i]), null, 0.6); }
+function setRepeat(){
+  clearInterval(repTimer);
+  if($('repeat').checked && selString>=0) repTimer = setInterval(()=>playString(selString), 1800);
+}
+document.querySelectorAll('#strings button').forEach(b=>{
+  b.onclick = ()=>{
+    selString = +b.dataset.s;
+    document.querySelectorAll('#strings button').forEach(x=>x.classList.toggle('sel', x===b));
+    playString(selString); setRepeat();
+  };
+});
+$('repeat').onchange = setRepeat;
+
+// マイク共通（チューナーとコード判定で共有）
+const MIC_FAIL = 'この画面ではマイクが使えませんでした。HTMLファイルを自分のブラウザ（Chrome / Safari）で直接開くとマイクが使えます。';
+const Mic = { stream:null, analyser:null, users:new Set() };
+async function ensureMic(user){
+  if(!Mic.analyser){
+    Mic.stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const c = ac(), src = c.createMediaStreamSource(Mic.stream);
+    Mic.analyser = c.createAnalyser(); Mic.analyser.fftSize = 8192; Mic.analyser.smoothingTimeConstant = 0.5;
+    src.connect(Mic.analyser);
+  }
+  Mic.users.add(user);
+  return Mic.analyser;
+}
+function releaseMic(user){
+  Mic.users.delete(user);
+  if(Mic.users.size===0 && Mic.stream){ Mic.stream.getTracks().forEach(t=>t.stop()); Mic.stream=null; Mic.analyser=null; }
+}
+
+// チューナー：自己相関でピッチ検出
+let micOn = false, analyser = null, micBuf = null, lastDetect = 0;
+$('micBtn').onclick = async ()=>{
+  if(micOn){ stopMic(); return; }
+  try{
+    analyser = await ensureMic('tuner');
+    micBuf = new Float32Array(analyser.fftSize);
+    micOn = true; $('micBtn').textContent = '■ マイクをオフ'; $('micBtn').classList.add('on');
+    $('micMsg').textContent = '弦を1本ずつ鳴らしてください。';
+    requestAnimationFrame(micLoop);
+  }catch(e){
+    $('micMsg').textContent = MIC_FAIL + ' それまでは上の「基準音で合わせる」を使ってください。';
+  }
+};
+function stopMic(){
+  micOn = false; releaseMic('tuner');
+  $('micBtn').textContent = '🎤 マイクをオン'; $('micBtn').classList.remove('on');
+  $('tNote').textContent = '—';
+}
+function detectPitch(buf, sr){
+  let rms = 0; for(let i=0;i<buf.length;i++) rms += buf[i]*buf[i];
+  if(Math.sqrt(rms/buf.length) < 0.01) return -1;
+  const minLag = Math.floor(sr/1000), maxLag = Math.floor(sr/65), n = buf.length - maxLag - 1;
+  let best = -1, bestVal = 0; const corr = new Float32Array(maxLag+2);
+  for(let lag=minLag; lag<=maxLag+1; lag++){
+    let s = 0; for(let j=0;j<n;j++) s += buf[j]*buf[j+lag];
+    corr[lag] = s;
+  }
+  // 最初に十分高いピークを採用（オクターブ誤検出を防ぐ）
+  let maxAll = 0; for(let l=minLag;l<=maxLag;l++) if(corr[l]>maxAll) maxAll = corr[l];
+  for(let l=minLag+1;l<=maxLag;l++){
+    if(corr[l]>corr[l-1] && corr[l]>=corr[l+1] && corr[l] > 0.85*maxAll){ best = l; bestVal = corr[l]; break; }
+  }
+  if(best < 0) return -1;
+  const a = corr[best-1], b = corr[best], c2 = corr[best+1];
+  const shift = (a - c2) / (2*(a - 2*b + c2) || 1);
+  return sr / (best + shift);
+}
+function micLoop(t){
+  if(!micOn) return;
+  if(t - lastDetect > 90){
+    lastDetect = t;
+    analyser.getFloatTimeDomainData(micBuf);
+    const f = detectPitch(micBuf.subarray(0, 3072), ctx.sampleRate);
+    if(f > 0){
+      const m = 69 + 12*Math.log2(f/440), nearest = Math.round(m), cents = Math.round((m - nearest)*100);
+      $('tNote').textContent = NOTE[((nearest%12)+12)%12] + (Math.floor(nearest/12)-1);
+      const nd = $('needle'); nd.style.left = (50 + Math.max(-50,Math.min(50,cents))) + '%';
+      nd.classList.toggle('good', Math.abs(cents) <= 5);
+      $('tSub').textContent = `${f.toFixed(1)} Hz ／ ${cents>0?'+':''}${cents}¢ ` + (Math.abs(cents)<=5 ? '✓ OK' : cents<0 ? '（低い：締める）' : '（高い：ゆるめる）');
+    }
+  }
+  requestAnimationFrame(micLoop);
+}
+
+/* ---------- コード ---------- */
+// フレット：6弦→1弦、-1はミュート
+const CHORDS = {
+  'C':[-1,3,2,0,1,0], 'D':[-1,-1,0,2,3,2], 'E':[0,2,2,1,0,0], 'G':[3,2,0,0,0,3], 'A':[-1,0,2,2,2,0],
+  'Am':[-1,0,2,2,1,0], 'Dm':[-1,-1,0,2,3,1], 'Em':[0,2,2,0,0,0],
+  'F':{f:[1,3,3,2,1,1], barre:[1,0]}, 'Bm':{f:[-1,2,4,4,3,2], barre:[2,1]},
+  'C7':[-1,3,2,3,1,0], 'D7':[-1,-1,0,2,1,2], 'E7':[0,2,0,1,0,0], 'G7':[3,2,0,0,0,1], 'A7':[-1,0,2,0,2,0], 'B7':[-1,2,1,2,0,2],
+  'Fmaj7':[-1,-1,3,2,1,0], 'Cmaj7':[-1,3,2,0,0,0]
+};
+const chordFrets = n => Array.isArray(CHORDS[n]) ? CHORDS[n] : CHORDS[n].f;
+function diagram(name, w=96){
+  const ch = CHORDS[name], fr = chordFrets(name), barre = Array.isArray(ch) ? null : ch.barre;
+  const X = i => 14 + i*14, Y = f => 22 + f*20;
+  let s = `<svg viewBox="0 0 98 112" width="${w}" height="${w*112/98}">`;
+  for(let f=0; f<=4; f++) s += `<line x1="14" x2="84" y1="${Y(f)}" y2="${Y(f)}" stroke="#8a7660" stroke-width="${f===0?4:1.2}"/>`;
+  for(let i=0;i<6;i++) s += `<line x1="${X(i)}" x2="${X(i)}" y1="${Y(0)}" y2="${Y(4)}" stroke="#c9b79f" stroke-width="${1.6-i*0.15}"/>`;
+  if(barre) s += `<rect x="${X(barre[1])-6}" y="${Y(barre[0])-16}" width="${X(5)-X(barre[1])+12}" height="12" rx="6" fill="#f0a33a"/>`;
+  fr.forEach((f,i)=>{
+    if(f<0) s += `<text x="${X(i)}" y="15" text-anchor="middle" font-size="11" fill="#b3a28c">×</text>`;
+    else if(f===0) s += `<circle cx="${X(i)}" cy="11" r="4" fill="none" stroke="#b3a28c" stroke-width="1.4"/>`;
+    else if(!(barre && f===barre[0] && i>=barre[1])) s += `<circle cx="${X(i)}" cy="${Y(f)-10}" r="5.5" fill="#f0a33a"/>`;
+  });
+  return s + '</svg>';
+}
+$('chordGrid').innerHTML = Object.keys(CHORDS).map(n=>`<div class="chordcell" data-c="${n}"><div class="nm">${n}</div>${diagram(n, 88)}</div>`).join('');
+document.querySelectorAll('.chordcell').forEach(el=> el.onclick = ()=> strum(chordFrets(el.dataset.c)));
+
+const selected = new Set(['C','G','Am','Em']);
+$('chips').innerHTML = Object.keys(CHORDS).map(n=>`<button class="chip${selected.has(n)?' on':''}" data-c="${n}">${n}</button>`).join('');
+document.querySelectorAll('.chip').forEach(b=> b.onclick = ()=>{
+  const n = b.dataset.c;
+  if(selected.has(n)){ if(selected.size>1) selected.delete(n); } else selected.add(n);
+  b.classList.toggle('on', selected.has(n));
+});
+let chordMode = false, curC = null, nxtC = null;
+function pickOther(not){
+  const arr = [...selected].filter(x=>x!==not);
+  return arr.length ? arr[Math.floor(Math.random()*arr.length)] : not;
+}
+function showChords(){
+  $('curName').textContent = curC; $('curDia').innerHTML = diagram(curC, 120);
+  $('nxtName').textContent = nxtC; $('nxtDia').innerHTML = diagram(nxtC, 64);
+}
+$('chordBtn').onclick = ()=>{
+  if(M.running && chordMode){ stopMetro(); return; }
+  if(M.running) stopMetro();
+  curC = pickOther(null); nxtC = pickOther(curC); showChords();
+  chordMode = true; startMetro();
+};
+M.listeners.push((b,n)=>{
+  if(!chordMode) return;
+  const per = +$('perChange').value;
+  if(n>0 && n % per === 0){ curC = nxtC; nxtC = pickOther(curC); showChords(); if(typeof judgeReset==='function') judgeReset(); }
+  if(n % per === 0 && $('strumOn').checked) strum(chordFrets(curC));
+});
+curC='C'; nxtC='G'; showChords();
+
+/* ---------- コード判定（オプション） ---------- */
+const J = { on:false, an:null, freq:null, time:null, chroma:new Float32Array(12), last:null, lastAt:0, tick:0 };
+$('judgeTarget').innerHTML = `<option value="follow">練習中のコードに合わせる</option>` +
+  Object.keys(CHORDS).map(n=>`<option value="${n}">${n}</option>`).join('');
+$('chroma').innerHTML = NOTE.map(n=>`<div class="col"><div class="bar"></div><div class="lb">${n.replace('#','♯')}</div></div>`).join('');
+const judgeTarget = ()=> $('judgeTarget').value==='follow' ? (curC || 'C') : $('judgeTarget').value;
+const chordPcs = n => new Set(chordFrets(n).map((f,i)=> f<0 ? -1 : (OPEN[i]+f)%12).filter(x=>x>=0));
+const pcName = pc => NOTE[pc].replace('#','♯');
+function judgeReset(){ J.chroma.fill(0); J.last = null; }
+$('judgeTarget').onchange = judgeReset;
+
+$('judgeOn').onchange = async e=>{
+  const on = e.target.checked;
+  $('judgePanel').hidden = !on;
+  if(on){
+    J.on = true; judgeReset(); $('judgeMsg').textContent = '';
+    try{
+      J.an = await ensureMic('chord');
+      J.freq = new Float32Array(J.an.frequencyBinCount);
+      J.time = new Float32Array(J.an.fftSize);
+      requestAnimationFrame(judgeLoop);
+    }catch(err){
+      J.an = null; $('judgeMsg').textContent = MIC_FAIL;
+    }
+  } else {
+    J.on = false; J.an = null; releaseMic('chord');
+    $('judgeBadge').hidden = true;
+  }
+};
+
+function analyzeChroma(){
+  const an = J.an, sr = ctx.sampleRate, binHz = sr / an.fftSize;
+  an.getFloatFrequencyData(J.freq);
+  an.getFloatTimeDomainData(J.time);
+  let rms = 0; for(let i=0;i<J.time.length;i++) rms += J.time[i]*J.time[i];
+  rms = Math.sqrt(rms / J.time.length);
+  const raw = new Float32Array(12);
+  const k0 = Math.ceil(75/binHz), k1 = Math.floor(1500/binHz);
+  for(let k=k0; k<=k1; k++){
+    const db = J.freq[k];
+    if(db < -85 || db < J.freq[k-1] || db < J.freq[k+1]) continue; // ピークのみ
+    const m = 69 + 12*Math.log2(k*binHz/440), r = Math.round(m);
+    if(Math.abs(m - r) > 0.35) continue;
+    raw[((r%12)+12)%12] += Math.pow(10, db/20);
+  }
+  const mx = Math.max(...raw);
+  for(let i=0;i<12;i++) J.chroma[i] = 0.55*J.chroma[i] + 0.45*(mx>0 ? raw[i]/mx : 0);
+  const mx2 = Math.max(...J.chroma) || 1;
+  return { rms, c: Array.from(J.chroma, v=>v/mx2) };
+}
+
+function judgeLoop(t){
+  if(!J.on || !J.an) return;
+  if(t - J.tick > 80){
+    J.tick = t;
+    const { rms, c } = analyzeChroma();
+    const name = judgeTarget(), tones = new Set(chordPcs(name));
+    if(rms > 0.012){
+      const missing = [...tones].filter(pc => c[pc] < 0.22);
+      const extra = [...Array(12).keys()].filter(pc => !tones.has(pc) && c[pc] > 0.6);
+      J.last = { name, ok: !missing.length && !extra.length, missing, extra };
+      J.lastAt = t;
+    }
+    const recent = J.last && J.last.name===name && (t - J.lastAt < 1500);
+    // バー描画
+    const cols = $('chroma').children;
+    for(let i=0;i<12;i++){
+      cols[i].className = 'col' + (tones.has(i)?' tone':'') +
+        (recent && J.last.missing.includes(i)?' miss':'') + (recent && J.last.extra.includes(i)?' extra':'');
+      cols[i].firstChild.style.height = Math.round((rms>0.006 ? c[i] : 0)*100) + '%';
+    }
+    // 結果
+    const res = $('jResult'), sub = $('jSub'), badge = $('judgeBadge');
+    let text, cls, detail = '';
+    if(recent){
+      cls = J.last.ok ? 'ok' : 'ng';
+      text = J.last.ok ? `✓ ${name} OK!` : `✗ ${name} もう少し`;
+      const parts = [];
+      if(J.last.missing.length) parts.push('鳴っていない音: ' + J.last.missing.map(pcName).join(', '));
+      if(J.last.extra.length) parts.push('余計な音: ' + J.last.extra.map(pcName).join(', '));
+      detail = parts.join(' ／ ');
+    } else {
+      cls = ''; text = `${name} を鳴らしてください`;
+      detail = 'コードの構成音: ' + [...tones].map(pcName).join(', ');
+    }
+    res.textContent = text; res.className = 'jresult ' + cls; sub.textContent = detail;
+    const showBadge = M.running && chordMode && $('judgeTarget').value==='follow';
+    badge.hidden = !showBadge;
+    if(showBadge){ badge.textContent = recent ? text + (detail ? '（' + detail + '）' : '') : '🎤 聞いています…'; badge.className = 'judge-badge ' + cls; }
+  }
+  requestAnimationFrame(judgeLoop);
+}
+
+/* ---------- 指板クイズ ---------- */
+const fb = $('fb');
+const NUT = 26, FW = 28, SY = i => 16 + i*24; // i=0 が1弦（上）
+const fretX = f => f===0 ? 12 : NUT + FW*f - FW/2;
+function drawBoard(target){
+  let s = `<rect x="${NUT}" y="${SY(0)-8}" width="${FW*12}" height="${SY(5)-SY(0)+16}" fill="#3b2a1b" rx="3"/>`;
+  [3,5,7,9].forEach(f=> s += `<circle cx="${fretX(f)}" cy="${(SY(2)+SY(3))/2}" r="5" fill="#5a4530"/>`);
+  s += `<circle cx="${fretX(12)}" cy="${(SY(1)+SY(2))/2}" r="5" fill="#5a4530"/><circle cx="${fretX(12)}" cy="${(SY(3)+SY(4))/2}" r="5" fill="#5a4530"/>`;
+  for(let f=0; f<=12; f++){
+    const x = NUT + FW*f;
+    s += `<line x1="${x}" x2="${x}" y1="${SY(0)-8}" y2="${SY(5)+8}" stroke="${f===0?'#e9dcc6':'#9b8a74'}" stroke-width="${f===0?5:1.5}"/>`;
+    if(f>0) s += `<text x="${fretX(f)}" y="${SY(5)+26}" text-anchor="middle" font-size="10" fill="#b3a28c">${f}</text>`;
+  }
+  for(let i=0;i<6;i++){
+    s += `<line x1="4" x2="${NUT+FW*12}" y1="${SY(i)}" y2="${SY(i)}" stroke="#d8c7ae" stroke-width="${0.8+i*0.35}"/>`;
+    s += `<text x="${NUT+FW*12+6}" y="${SY(i)+4}" font-size="10" fill="#b3a28c">${i+1}</text>`;
+  }
+  if(target){
+    s += `<circle cx="${fretX(target.f)}" cy="${SY(target.s)}" r="10" fill="#f0a33a" stroke="#fff" stroke-width="2"><animate attributeName="r" values="9;11;9" dur="1.2s" repeatCount="indefinite"/></circle>`;
+    if(target.reveal) s += `<text x="${fretX(target.f)}" y="${SY(target.s)+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#2a1a08">${target.reveal}</text>`;
+  }
+  fb.innerHTML = s;
+}
+const OPEN_TOP = [64,59,55,50,45,40]; // 1弦→6弦
+const Q = { correct:0, total:0, streak:0, best:0, cur:null, locked:false };
+try{ Q.best = +localStorage.getItem('gtr_best') || 0; }catch(e){}
+function updScore(){ $('sCorrect').textContent=Q.correct; $('sTotal').textContent=Q.total; $('sStreak').textContent=Q.streak; $('sBest').textContent=Q.best; }
+function buildAnswers(){
+  const nat = $('qNatural').checked;
+  const list = nat ? ['C','D','E','F','G','A','B'] : NOTE;
+  $('answers').style.gridTemplateColumns = nat ? 'repeat(4,1fr)' : 'repeat(4,1fr)';
+  $('answers').innerHTML = list.map(n=>`<button data-n="${n}">${n.replace('#','♯')}</button>`).join('');
+  document.querySelectorAll('#answers button').forEach(b=> b.onclick = ()=> answer(b));
+}
+function newQuestion(){
+  const max = +$('qRange').value, nat = $('qNatural').checked;
+  let s, f, n, guard = 0;
+  do{
+    s = Math.floor(Math.random()*6); f = Math.floor(Math.random()*(max+1));
+    n = NOTE[(OPEN_TOP[s]+f)%12]; guard++;
+  } while(((nat && n.includes('#')) || (Q.cur && Q.cur.s===s && Q.cur.f===f)) && guard<200);
+  Q.cur = {s, f, n}; Q.locked = false;
+  $('qText').textContent = `${s+1}弦 ${f===0?'開放':f+'フレット'} の音は？`;
+  document.querySelectorAll('#answers button').forEach(b=> b.className='');
+  drawBoard(Q.cur);
+}
+function answer(btn){
+  if(Q.locked) return;
+  const ok = btn.dataset.n === Q.cur.n;
+  Q.total++;
+  pluck(midiFreq(OPEN_TOP[Q.cur.s] + Q.cur.f), null, 0.5);
+  if(ok){
+    Q.correct++; Q.streak++;
+    if(Q.streak > Q.best){ Q.best = Q.streak; try{ localStorage.setItem('gtr_best', Q.best); }catch(e){} }
+    btn.className = 'ok'; Q.locked = true;
+    $('qText').textContent = `正解！ ${NOTE_JP[Q.cur.n] || Q.cur.n}`;
+    setTimeout(newQuestion, 650);
+  } else {
+    Q.streak = 0; btn.className = 'ng'; Q.locked = true;
+    document.querySelectorAll('#answers button').forEach(b=>{ if(b.dataset.n===Q.cur.n) b.className='ok'; });
+    $('qText').textContent = `正解は ${NOTE_JP[Q.cur.n] || Q.cur.n.replace('#','♯')}`;
+    drawBoard({...Q.cur, reveal:Q.cur.n.replace('#','♯')});
+    setTimeout(newQuestion, 1400);
+  }
+  updScore();
+}
+$('qSkip').onclick = newQuestion;
+$('qRange').onchange = newQuestion;
+$('qNatural').onchange = ()=>{ buildAnswers(); newQuestion(); };
+buildAnswers(); updScore(); newQuestion();
+</script>
+</body>
+</html>
