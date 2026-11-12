@@ -19,7 +19,8 @@ It needs no build step, server, or external audio files. Opening it in a browser
 |---|---|---|
 | Learn (home) | Practice log | Today's minutes vs. a daily goal, streak, 5-week calendar, total time. Stored only on the device |
 | | Today's menu | 5 small daily tasks (lesson, fretboard quiz ×10, ear training ×10, rhythm ×30 taps, chord changes 2 min) with automatic progress |
-| Learn (theory lessons) | 10 step-by-step lessons | Note names → fretboard → rhythm/strumming → major scale → intervals → chord construction → diatonic chords → chord progressions → minor keys/relative keys → pentatonic improvisation. Each has interactive sound demos and a quiz (3 correct answers completes it); progress is saved |
+| Learn (theory lessons) | 14 step-by-step lessons | Note names → fretboard → rhythm/strumming → reading tab → major scale → intervals → chord construction → diatonic chords → chord progressions → minor keys/relative keys → pentatonic improvisation → power chords → barre chords (movable E/A shapes) → capo and transposition. Each has interactive sound demos and a quiz (3 correct answers completes it); progress is saved |
+| | Glossary | 32 beginner terms with search |
 | Metronome | BPM 30–240, ±1/±5 buttons, slider | |
 | | Time signature (2/3/4/6), accent on beat 1 | |
 | | Tap tempo | Averages the last 4 taps, resets after a 2.5 s gap |
@@ -135,7 +136,7 @@ It needs no build step, server, or external audio files. Opening it in a browser
 - iPhone 13 / iPad Pro 11 emulation in Playwright (Chromium): every tab and training mode, no console errors
 - Theory check: all 12 major keys, their relative minors, diatonic chords, chord tones and intervals printed and
   verified for correct spelling; every lesson quiz generated 300 times with no duplicate/missing options;
-  all 10 lessons completed end-to-end in emulation with no errors
+  all 14 lessons completed end-to-end in emulation with no errors
 - Rhythm timing math: taps injected at 0 / +40 / −25 ms and on an off-beat 8th were measured exactly
 - **Not yet tested**: mic input from a real guitar, and behavior on real devices (iOS Safari / Android Chrome).
   On a real iPhone, check: sound with the silent switch on, the mic tuner, and whether rhythm offsets look biased
@@ -171,7 +172,7 @@ Mic audio is analyzed only in the browser and is never sent anywhere.
 - Practice log (a calendar of daily practice time)
 - Tab-reading practice mode
 - More realistic sound using recorded samples (CC0 from Freesound, etc.)
-- More lessons (barre chords and the CAGED system, 7th-chord functions, secondary dominants, reading tab)
+- More lessons (the CAGED system, 7th-chord functions, secondary dominants, fingerpicking patterns)
 - Song-based practice (pick a progression and strumming pattern, play along)
 - Latency calibration for the rhythm mode (useful with Bluetooth earphones)
 - Rhythm patterns beyond a straight grid (e.g. syncopation reading)

@@ -211,6 +211,16 @@ button:disabled{opacity:.4}
 @media (max-width:420px){ nav button{font-size:10px} .dia7 button b{font-size:11px} }
 @media (min-width:760px){ #learnHome,#lessonView{max-width:780px;width:100%;justify-self:center} .lesson p{font-size:16px} }
 
+/* 用語集・追加レッスン */
+input[type=search]{width:100%;font-family:inherit;font-size:16px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:8px;-webkit-appearance:none;appearance:none}
+#glossList details{border-bottom:1px solid var(--line)}
+#glossList summary{padding:10px 2px;font-size:15px;font-weight:700;cursor:pointer}
+#glossList p{margin:0 0 10px;padding:0 2px;font-size:14px;line-height:1.7;color:var(--muted)}
+.capotbl div{display:grid;grid-template-columns:44px 1fr 2.4fr;gap:6px;padding:7px 8px;font-size:14px;border-bottom:1px solid var(--line)}
+.capotbl .hd{font-size:11px;color:var(--muted)}
+.capotbl .easy{background:rgba(108,196,138,.16);font-weight:700} .capotbl .ok{background:rgba(240,163,58,.10)}
+@media (min-width:760px){ #glossCard{max-width:780px;width:100%;justify-self:center} }
+
 /* 曲に合わせて弾く */
 .painfo{margin:10px 0 0;line-height:1.7}
 .painfo b{color:#ffd9a0}
@@ -284,10 +294,15 @@ button:disabled{opacity:.4}
   </div>
   <div class="card wide" id="learnHome">
     <h2>📖 音楽理論をいちから学ぶ</h2>
-    <p class="muted" style="margin:0">楽譜が読めなくても大丈夫。音の名前からコード進行・アドリブまで、音を鳴らしながら順番に学べます。1レッスン5分ほど。最後のクイズに3問正解すると完了です。</p>
+    <p class="muted" style="margin:0">楽譜が読めなくても大丈夫。音の名前からコード進行・アドリブ、バレーコードやカポまで、音を鳴らしながら順番に学べます。1レッスン5分ほど。最後のクイズに3問正解すると完了です。</p>
     <div class="pbar"><div id="lpFill" style="width:0"></div></div>
     <div class="muted" id="lpText"></div>
     <div id="lessonList"></div>
+  </div>
+  <div class="card wide" id="glossCard">
+    <h2>📚 用語集</h2>
+    <input type="search" id="glossQ" placeholder="ことばを探す（例：カポ）" autocomplete="off">
+    <div id="glossList"></div>
   </div>
   <div class="card wide" id="lessonView" hidden></div>
 </section>
@@ -1465,6 +1480,8 @@ const T_IV = [null,['短2度',1],['長2度',1],['短3度',2],['長3度',2],['完
 const ROMAN = ['I','ii','iii','IV','V','vi','vii°'], DQ = ['M','m','m','M','M','m','dim'], DFN = ['T','S','T','S','D','T','D'];
 const diatonic = key => scaleNotes(key,'major').map((n,i)=>({ root:n, ty:DQ[i], name:n+T_CHORD[DQ[i]].sym, roman:ROMAN[i], fn:DFN[i] }));
 const rootMidi = (root, base=48) => base + parseNote(root).pc;
+// 音の番号（0=C）から、よく使う書き方の音名を返す
+const keyByPc = pc => KEYS.find(k=> parseNote(k).pc === ((pc%12)+12)%12);
 // コードを鳴らす：ギターのフォームがあればそれで、なければ構成音を重ねる
 function playChord(root, ty, t, up){
   const name = root + T_CHORD[ty].sym;
@@ -1646,6 +1663,52 @@ const LESSONS = [
       mkQ('BPM 60 は、1分間に何拍？', '60拍', ['30拍','120拍','4拍'], 'BPM は1分間の拍数。BPM 60 は1秒に1拍です。'),
       mkQ('「1 と 2 と…」の「と」（裏拍）は、ふつうどちらで弾く？', 'アップ ↑', ['ダウン ↓','どちらでもなく弾かない','必ず両方'], '腕を8分で振り続けると、表がダウン、裏がアップになります。'),
       mkQ('4/4拍子の1小節に、8分音符はいくつ入る？', '8つ', ['4つ','6つ','16個'], '4拍 × 2 ＝ 8つです。')
+    ];
+  }
+},
+{ id:'tab', title:'TAB譜の読み方', sub:'五線譜が読めなくても弾ける楽譜',
+  body:`
+  <p>ギターには <b>TAB譜（タブ譜）</b>という専用の楽譜があります。「どの弦の何フレットを押さえるか」がそのまま書いてあるので、五線譜が読めなくても弾けます。</p>
+  <div class="tbl"><div><b>6本の線</b>6本の弦</div><div><b>上の線</b>1弦（細い）</div><div><b>下の線</b>6弦（太い）</div><div><b>数字</b>フレット番号</div><div><b>0</b>開放弦</div></div>
+  <p>ギターを抱えて上からのぞき込んだときの見え方と同じ向きです。左から右へ順番に弾きます。</p>
+  <div class="chips" data-w="songs"></div>
+  <div data-w="tab"></div>
+  <svg class="fb" data-w="fb" viewBox="0 0 372 170"></svg>
+  <div class="row"><button class="primary" data-w="play">▶ 再生</button><span class="muted">下の指板に、押さえる場所が出ます</span></div>
+  <p>数字が<b>縦に並んでいる</b>ときは、同時に鳴らします（＝コード）。「コード C」を選ぶと、コード表の C と同じ押さえ方だとわかります。</p>
+  <p>TAB譜の弱点は、音の長さ（リズム）がわかりにくいこと。曲を聞いてリズムを覚えてから読むのがコツです。</p>
+  <div class="point">ポイント：線＝弦（上が1弦）／数字＝フレット／0は開放／縦に並んだ数字は同時に弾く</div>`,
+  init(el){
+    // [弦(0=1弦), フレット] の並び。配列の配列は同時に鳴らす
+    const SONGS = [
+      ['ドレミファソラシド', [[4,3],[3,0],[3,2],[3,3],[2,0],[2,2],[1,0],[1,1]]],
+      ['きらきら星', [[1,1],[1,1],[0,3],[0,3],[0,5],[0,5],[0,3],null,[0,1],[0,1],[0,0],[0,0],[1,3],[1,3],[1,1]]],
+      ['コード C', [[[4,3],[3,2],[2,0],[1,1],[0,0]]]]
+    ];
+    const tab = el.querySelector('[data-w=tab]'), svg = el.querySelector('[data-w=fb]'), chips = el.querySelector('[data-w=songs]'); let sg = 0;
+    const flat = ev => ev ? (Array.isArray(ev[0]) ? ev : [ev]) : [];
+    const draw = cur => { const ns = SONGS[sg][1], step = Math.min(34, 250 / Math.max(ns.length, 1)); let s = '';
+      for(let i=0;i<6;i++) s += `<line x1="22" x2="296" y1="${14+i*13}" y2="${14+i*13}" stroke="#8a7660" stroke-width="1"/><text x="8" y="${17.5+i*13}" font-size="8" fill="#b3a28c">${i+1}弦</text>`;
+      s += `<line x1="22" x2="22" y1="14" y2="79" stroke="#8a7660" stroke-width="2"/><line x1="296" x2="296" y1="14" y2="79" stroke="#8a7660" stroke-width="2"/>`;
+      ns.forEach((ev,k)=> flat(ev).forEach(([st,f])=>{ const x = 40 + k*step, y = 14 + st*13;
+        s += `<rect x="${x-6}" y="${y-6.5}" width="12" height="13" rx="3" fill="${k===cur ? C_HIT : '#262019'}"/><text x="${x}" y="${y+4}" text-anchor="middle" font-size="11" font-weight="700" fill="${k===cur ? '#10220f' : '#f3e9dc'}">${f}</text>`; }));
+      tab.innerHTML = `<svg class="kb" viewBox="0 0 300 92">${s}</svg>`;
+      svg.innerHTML = boardSVG(flat(ns[cur]).map(([st,f])=>({s:st, f, fill:C_HIT, label:noteAt(st,f).replace('#','♯')})));
+      chips.querySelectorAll('button').forEach((b,i)=> b.classList.toggle('on', i===sg)); };
+    chips.innerHTML = SONGS.map((x,i)=>`<button class="chip" data-i="${i}">${x[0]}</button>`).join('');
+    chips.querySelectorAll('button').forEach(b=> b.onclick = ()=>{ sg = +b.dataset.i; Seq.stop(); draw(); });
+    el.querySelector('[data-w=play]').onclick = e => { const ns = SONGS[sg][1];
+      Seq.play(e.currentTarget, ns.length, 0.45, (i,t)=> flat(ns[i]).slice().reverse().forEach(([st,f],k)=> pluck(midiFreq(OPEN_TOP[st]+f), t + k*0.03, 0.45)), i=>draw(i), false, ()=>draw()); };
+    draw();
+  },
+  quiz(){
+    const f = pick([1,2,3,5]), s = pick([1,2,3,4,5,6]);
+    return [
+      mkQ('TAB譜のいちばん上の線は、どの弦？', '1弦（いちばん細い弦）', ['6弦（いちばん太い弦）','3弦','決まっていない'], '上が1弦、下が6弦。ギターを上からのぞき込んだ向きです。'),
+      mkQ('TAB譜の数字「0」の意味は？', '開放弦（押さえずに弾く）', ['弾かない','ミュートする','0.5フレットを押さえる'], '0 は何も押さえない開放弦です。'),
+      mkQ('数字が縦に並んでいるときは？', '同時に鳴らす', ['上から順に弾く','どれか1つを選ぶ','下の数字だけ弾く'], '縦に並んだ数字はコード（和音）です。'),
+      mkQ(`上から${s}本目の線に「${f}」と書いてあったら？`, `${s}弦の${f}フレット`, [`${f}弦の${s}フレット`, `${7-s}弦の${f}フレット`, `${s}弦を${f}回弾く`].filter(x=>x!==`${s}弦の${f}フレット`), '線が弦、数字がフレットです。'),
+      mkQ('TAB譜だけではわかりにくいものは？', '音の長さ（リズム）', ['押さえる弦','押さえるフレット','弾く順番'], '場所はわかりますが、リズムは曲を聞いて確かめましょう。')
     ];
   }
 },
@@ -1916,6 +1979,126 @@ const LESSONS = [
       mkQ('アドリブのフレーズを落ち着いて終わらせるには？', 'ルートの音で終わる', ['いちばん高い音で終わる','必ず開放弦で終わる','速く弾いて終わる'], 'キーの「家」であるルートに着地すると安定します。')
     ];
   }
+},
+{ id:'power', title:'パワーコード', sub:'2本の指で弾けるロックの基本',
+  body:`
+  <p><b>パワーコード</b>は、コードの3つの音から<b>3度を抜いて、ルートと5度だけ</b>にしたものです。C なら C と G。「C5」のように書きます。</p>
+  <p>明るい・暗いを決める3度がないので、<b>メジャーでもマイナーでもない</b>力強い響きになります。音が少ないぶん、歪ませても濁らないのでロックで大活躍します。</p>
+  <p>押さえ方は1種類だけ。<b>ルートを人差し指</b>、そこから<b>2フレット先・1本細い弦を薬指</b>（さらにその隣を小指で押さえるとオクターブ上のルートが加わります）。</p>
+  <p>下の指板で、<b>6弦か5弦</b>の好きな場所をタップしてください。そこをルートにしたパワーコードが鳴ります。</p>
+  <svg class="fb" data-w="fb" viewBox="0 0 372 170"></svg>
+  <div class="readout" data-w="out">6弦か5弦をタップ</div>
+  <div class="row"><button class="primary" data-w="riff">▶ リフを聞く（G5 – C5 – D5）</button></div>
+  <p>形はそのまま、横にずらすだけでどのコードにもなります。レッスン2で覚えた「6弦と5弦の音名」がそのままコード名になるわけです。</p>
+  <div class="point">ポイント：パワーコード＝ルート＋5度／3度がないのでメジャーでもマイナーでもない／同じ形を横にずらすだけ</div>`,
+  init(el){
+    const svg = el.querySelector('[data-w=fb]'), out = el.querySelector('[data-w=out]');
+    const shape = (s,f) => [[s,f],[s-1,f+2],[s-2,f+2]];
+    const draw = (s,f) => { svg.innerHTML = boardSVG(s === undefined ? [] : shape(s,f).map(([a,b],i)=>({s:a, f:b, fill: i===1 ? C_TONE : C_ROOT, label:noteAt(a,b).replace('#','♯'), text: i===1 ? '#2a1a08' : '#fff'}))); };
+    const sound = (s,f,t) => shape(s,f).forEach(([a,b],k)=> pluck(midiFreq(OPEN_TOP[a]+b), (t ?? ac().currentTime+0.01) + k*0.012, 0.4));
+    svg.addEventListener('pointerdown', e=>{ const h = boardHit(svg, e); if(!h) return; e.preventDefault();
+      if(h.s < 4){ out.textContent = 'ルートは6弦か5弦で選んでください'; return; }
+      const f = Math.min(h.f, 10); sound(h.s, f); draw(h.s, f);
+      const r = noteAt(h.s,f).replace('#','♯'), fifth = noteAt(h.s-1,f+2).replace('#','♯');
+      out.textContent = `${r}5（${r}・${fifth}）— ${h.s+1}弦 ${f===0?'開放':f+'フレット'} がルート`; });
+    el.querySelector('[data-w=riff]').onclick = e => { const R = [[5,3],[5,3],[5,3],[5,3],[4,3],[4,3],[4,5],[4,5]];
+      Seq.play(e.currentTarget, 16, 30 / Math.max(M.bpm, 100), (i,t)=> sound(...R[i%8], t), i=> draw(...R[i%8]), false, ()=>draw()); };
+    draw();
+  },
+  quiz(){
+    const f = pick([1,3,5,7,8]), r = noteAt(5,f), r2 = pick(['C','D','E','G','A']);
+    return [
+      mkQ('パワーコードはどの音でできている？', 'ルートと5度', ['ルートと3度','3度と5度','ルート・3度・5度・7度'], '3度を抜いた、ルートと5度の2音です。'),
+      mkQ('パワーコードが「メジャーでもマイナーでもない」のはなぜ？', '3度の音がないから', ['5度の音がないから','ルートがないから','音が大きいから'], '明るい・暗いを決めるのは3度。それがないので、どちらでもありません。'),
+      mkQ(`6弦 ${f}フレットをルートにしたパワーコードは？`, r+'5', ['F5','G5','A5','B5','C5','D5','E5'].filter(x=>x!==r+'5'), '6弦の音名がそのままコード名になります。'),
+      mkQ('G5（6弦3フレット）を、形はそのままで2フレット高い方へずらすと？', 'A5', ['F5','B5','G♯5'], '2フレット＝全音。G の全音上は A です。'),
+      mkQ(`${r2}5 の構成音は？`, `${r2}・${spell(r2,7,4)}`, [`${r2}・${spell(r2,4,2)}`, `${r2}・${spell(r2,5,3)}`, `${r2}・${spell(r2,3,2)}`], '5度はルートから半音7つ上です。')
+    ];
+  }
+},
+{ id:'barre', title:'バレーコードと F の攻略', sub:'1つの形で12個のコードになる',
+  body:`
+  <p>最初の壁といわれる <b>F</b>。人差し指で複数の弦をまとめて押さえる<b>バレー（セーハ）</b>が必要なコードです。でも、しくみを知ると見え方が変わります。</p>
+  <p>F は実は、<b>E のフォームを1フレット横にずらしただけ</b>。開放弦だったところを、人差し指がナット（0フレット）の代わりに押さえています。だから同じ形をずらせば、G にも A にもなります。</p>
+  <div class="chips" data-w="forms"></div>
+  <div class="row"><span class="muted">位置</span><input type="range" class="grow" data-w="fret" min="0" max="9" value="1"><b data-w="fretv" style="min-width:70px;text-align:right"></b></div>
+  <svg class="fb" data-w="fb" viewBox="0 0 372 170"></svg>
+  <div class="readout" data-w="out"></div>
+  <div class="row"><button class="primary" data-w="play">▶ 鳴らす</button></div>
+  <p><b>E フォーム</b>は6弦、<b>A フォーム</b>は5弦がルートです。レッスン2の指板の音名がわかれば、どのコードも自分で作れます。</p>
+  <div class="tbl"><div><b>コツ1</b>人差し指は少し傾けて、側面の硬いところで</div><div><b>コツ2</b>親指はネックの真裏あたり</div><div><b>コツ3</b>フレットのすぐ近くを押さえる</div></div>
+  <p>最初から全部きれいに鳴らなくて大丈夫。<b>Fmaj7</b>（コード表にあります）や、カポを使って簡単なフォームで弾く方法（次のレッスン）で代用しながら、少しずつ慣れましょう。</p>
+  <div class="point">ポイント：バレーコード＝開放コードの形を人差し指ごと横にずらしたもの／E フォームは6弦、A フォームは5弦がルート</div>`,
+  init(el){
+    const FORMS = [['E フォーム',[0,2,2,1,0,0],'',0],['Em フォーム',[0,2,2,0,0,0],'m',0],['A フォーム',[-1,0,2,2,2,0],'',1],['Am フォーム',[-1,0,2,2,1,0],'m',1]];
+    const svg = el.querySelector('[data-w=fb]'), out = el.querySelector('[data-w=out]'), rng = el.querySelector('[data-w=fret]'), chips = el.querySelector('[data-w=forms]'); let fm = 0;
+    const frets = ()=> FORMS[fm][1].map(f=> f<0 ? f : f + +rng.value);
+    const draw = ()=>{ const n = +rng.value, F = FORMS[fm], fr = frets(), rootI = F[3];
+      const root = keyByPc(OPEN[rootI] + n), name = root + F[2], tones = chordNotes(root, F[2] ? 'm' : 'M'); // コード名に合わせたつづり
+      const lbl = m => tones.find(t=> parseNote(t).pc === m % 12) || '';
+      svg.innerHTML = boardSVG(fr.map((f,i)=> f<0 ? null : {s:5-i, f, fill: i===rootI ? C_ROOT : F[1][i]===0 ? '#c98a3a' : C_TONE, label:lbl(OPEN[i]+f), text: i===rootI ? '#fff' : '#2a1a08'}).filter(Boolean));
+      el.querySelector('[data-w=fretv]').textContent = n === 0 ? '開放' : n + 'フレット';
+      out.innerHTML = `<b>${name}</b><br><small>${n === 0 ? 'ふつうの開放コード（バレーなし）' : `${F[0]}を ${n}フレットでバレー／ルートは${6-rootI}弦`}</small>`;
+      chips.querySelectorAll('button').forEach((b,i)=> b.classList.toggle('on', i===fm)); };
+    chips.innerHTML = FORMS.map((x,i)=>`<button class="chip" data-i="${i}">${x[0]}</button>`).join('');
+    chips.querySelectorAll('button').forEach(b=> b.onclick = ()=>{ fm = +b.dataset.i; draw(); strum(frets()); });
+    rng.oninput = draw; rng.onchange = ()=> strum(frets());
+    el.querySelector('[data-w=play]').onclick = ()=> strum(frets());
+    draw();
+  },
+  quiz(){
+    const n = pick([3,5,7]), m = pick([2,3,5]);
+    return [
+      mkQ('E のフォームを1フレットずらしてバレーすると、何のコード？', 'F', ['E♭','G','A'], 'E の半音上は F。開放弦のかわりに人差し指で1フレットを押さえます。'),
+      mkQ(`E フォームのバレーコードを ${n}フレットで押さえると？`, keyByPc(4+n), ['F','G','A','B','C'].filter(x=>x!==keyByPc(4+n)), '6弦のそのフレットの音名がコード名になります（6弦：E F F♯ G G♯ A A♯ B）。'),
+      mkQ(`Am フォームのバレーコードを ${m}フレットで押さえると？`, keyByPc(9+m)+'m', ['Bm','Cm','Dm','Em','Am'].filter(x=>x!==keyByPc(9+m)+'m'), '5弦のそのフレットの音名＋m です（5弦：A A♯ B C C♯ D）。'),
+      mkQ('E フォームのバレーコードで、ルートがあるのは何弦？', '6弦', ['5弦','4弦','1弦だけ'], 'E フォームは6弦、A フォームは5弦がルートです。'),
+      mkQ('バレーコードで、人差し指は何の代わりをしている？', 'ナット（0フレット）', ['ピック','ブリッジ','チューナー'], '開放弦の位置をまるごと上にずらしている、と考えます。')
+    ];
+  }
+},
+{ id:'capo', title:'カポと移調', sub:'難しいキーを簡単なフォームで弾く',
+  body:`
+  <p><b>カポ（カポタスト）</b>は、全部の弦をまとめて押さえる道具です。前回のバレーの人差し指と同じで、<b>ナットの位置を動かす</b>はたらきをします。</p>
+  <p>カポを1フレットにつけると、<b>すべての音が半音上がります</b>。つまり、同じフォームのまま曲全体の高さ（キー）を変えられます。これを<b>移調</b>といいます。</p>
+  <div class="row"><label class="muted">フォーム <select data-w="shape"><option>C</option><option selected>G</option><option>D</option><option>A</option><option>E</option><option>Am</option><option>Em</option><option>Dm</option></select></label>
+    <label class="muted">カポ <select data-w="capo"><option value="0">なし</option><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
+    <button class="primary" data-w="play">▶ 鳴らす</button></div>
+  <div class="readout" data-w="out"></div>
+  <p>カポの使い道は2つあります。</p>
+  <div class="tbl"><div><b>歌に合わせる</b>声が出しやすい高さにキーを変える</div><div><b>楽に弾く</b>難しいキーを簡単なフォームに置きかえる</div></div>
+  <p>たとえばキー B♭ の曲は B♭・F・Gm・E♭ とバレーコードだらけ。でも<b>カポ3</b>なら G・D・Em・C のフォームで弾けます。キーを選んで、どのカポ位置が弾きやすいか見てみましょう。</p>
+  <div class="row"><label class="muted">曲のキー <select data-w="key">${keyOpts(KEYS,'B♭')}</select></label></div>
+  <div class="capotbl" data-w="tbl"></div>
+  <p>「コード進行」のレッスンで進行をローマ数字（I・IV・V・vi）で覚えたのは、このためでもあります。キーが変わっても「I–V–vi–IV」は同じです。</p>
+  <div class="point">ポイント：カポ1つで半音上がる／フォームはそのまま、キーだけ変わる／難しいキーは「カポ＋簡単なフォーム」で</div>
+  <div class="row"><button data-w="topa">🎵 「曲に合わせて弾く」で試す →</button></div>`,
+  init(el){
+    const sh = el.querySelector('[data-w=shape]'), cp = el.querySelector('[data-w=capo]'), out = el.querySelector('[data-w=out]'), ks = el.querySelector('[data-w=key]'), tbl = el.querySelector('[data-w=tbl]');
+    const real = ()=>{ const m = sh.value.endsWith('m'), root = m ? sh.value.slice(0,-1) : sh.value; return keyByPc(parseNote(root).pc + +cp.value) + (m ? 'm' : ''); };
+    const draw = ()=>{ const c = +cp.value;
+      out.innerHTML = c ? `カポ ${c} ＋ <b>${sh.value}</b> のフォーム ＝ 実際の音は <b>${real()}</b>` : `カポなし：<b>${sh.value}</b> のまま`;
+      const k = ks.value; let h = '<div class="hd"><span>カポ</span><span>フォームのキー</span><span>I・IV・V・vi のフォーム</span></div>';
+      for(let i=0;i<=7;i++){ const sk = keyByPc(parseNote(k).pc - i), d = diatonic(sk), cs = [d[0],d[3],d[4],d[5]].map(x=>x.name);
+        const easy = cs.every(n=>CHORDS[n] && Array.isArray(CHORDS[n])), ok = cs.every(n=>CHORDS[n]);
+        h += `<div class="${easy?'easy':ok?'ok':''}"><span>${i || 'なし'}</span><span>${sk}</span><span>${cs.join('・')}${easy?' ◎':ok?' ○':''}</span></div>`; }
+      tbl.innerHTML = h + '<p class="muted" style="margin:6px 0 0">◎＝開放コードだけで弾ける　○＝バレーコードを含む</p>'; };
+    const play = ()=> strum(chordFrets(sh.value).map(f=> f<0 ? f : f + +cp.value));
+    sh.onchange = cp.onchange = ()=>{ draw(); play(); }; ks.onchange = draw;
+    el.querySelector('[data-w=play]').onclick = play;
+    el.querySelector('[data-w=topa]').onclick = ()=>{ $('paKey').value = ks.value; $('paKey').dispatchEvent(new Event('change')); $('paAuto').click(); gotoTab('chord'); $('paBtn').scrollIntoView({block:'center'}); };
+    draw();
+  },
+  quiz(){
+    const c = pick([1,2,3,5]), s = pick(['C','G','D','A','E']);
+    return [
+      mkQ('カポを1フレットにつけると、音はどうなる？', 'すべての弦が半音上がる', ['すべての弦が半音下がる','1弦だけ上がる','変わらない'], 'カポはナットの位置を動かす道具。1フレット＝半音です。'),
+      mkQ(`カポ ${c} で ${s} のフォームを弾くと、実際に鳴るコードは？`, keyByPc(parseNote(s).pc+c), [keyByPc(parseNote(s).pc-c), keyByPc(parseNote(s).pc+c+1), keyByPc(parseNote(s).pc+c-1), s], `${s} から半音 ${c} つ上の音になります。`),
+      mkQ('キー A の曲を、G のフォームで弾きたい。カポの位置は？', '2フレット', ['1フレット','3フレット','5フレット'], 'G から A は全音（半音2つ）なので、カポ2です。'),
+      mkQ('カポを使う理由として正しいのは？', '難しいキーを簡単なフォームで弾ける', ['音が大きくなる','チューニングが不要になる','弦が切れにくくなる'], 'もう1つの使い道は、歌いやすい高さにキーを変えることです。'),
+      mkQ('曲のキーを変えることを何という？', '移調', ['転回','変拍子','チューニング'], 'ローマ数字で進行を覚えていれば、移調しても同じ考え方で弾けます。')
+    ];
+  }
 }
 ];
 
@@ -1972,7 +2155,7 @@ function renderLessonList(){
     <span class="num">${Learn.done.has(l.id) ? '✓' : i+1}</span><span class="tt"><b>${l.title}</b><small>${l.sub}</small></span>${i===next?'<span class="go">つぎはここ</span>':''}</button>`).join('');
   $('lessonList').querySelectorAll('button').forEach(b=> b.onclick = ()=> openLesson(+b.dataset.i));
 }
-function closeLesson(){ Seq.stop(); Learn.cur = -1; $('lessonView').hidden = true; $('lessonView').innerHTML = ''; $('learnHome').hidden = false; $('homeCards').hidden = false; renderLessonList(); renderHome(); window.scrollTo(0,0); }
+function closeLesson(){ Seq.stop(); Learn.cur = -1; $('lessonView').hidden = true; $('lessonView').innerHTML = ''; $('learnHome').hidden = false; $('homeCards').hidden = false; $('glossCard').hidden = false; renderLessonList(); renderHome(); window.scrollTo(0,0); }
 function openLesson(i){
   Seq.stop(); Learn.cur = i;
   const L = LESSONS[i], v = $('lessonView');
@@ -1980,7 +2163,7 @@ function openLesson(i){
     <h2 class="ltitle">${L.title}</h2><div class="lesson">${L.body}</div>
     <div class="lquiz"><h3>理解度チェック <span id="lqDots"></span></h3><div class="qtext" id="lqQ"></div><div class="answers two" id="lqA"></div><div class="lwhy" id="lqWhy"></div></div>
     <div class="row" style="margin-top:14px"><span class="grow"></span><button class="primary" id="lNext" hidden></button></div>`;
-  $('learnHome').hidden = true; $('homeCards').hidden = true; v.hidden = false; window.scrollTo(0,0);
+  $('learnHome').hidden = true; $('homeCards').hidden = true; $('glossCard').hidden = true; v.hidden = false; window.scrollTo(0,0);
   $('lBack').onclick = closeLesson;
   v.querySelectorAll('[data-go]').forEach(b=> b.onclick = ()=>{ const g = b.dataset.go;
     if(g==='fretquiz'){ gotoTab('fret'); } else gotoTrain(g); });
@@ -2016,9 +2199,47 @@ persist('goalMin');
 $('goalMin').addEventListener('change', ()=>renderHome());
 renderLessonList(); renderHome();
 
+// --- 用語集 ---
+const GLOSSARY = [
+  ['アップストローク','ピックを下（1弦側）から上へ振り上げて弾くこと。裏拍で使う。'],
+  ['アルペジオ','コードの音を1つずつ順番に弾くこと。'],
+  ['インターバル（音程）','2つの音の距離。「長3度」「完全5度」のように数える。'],
+  ['オクターブ','同じ音名で高さが違う2音の関係。半音12個ぶん、ギターでは12フレットぶん。'],
+  ['開放弦','どこも押さえずに鳴らす弦。TAB譜では 0。'],
+  ['カポ（カポタスト）','全部の弦をまとめて押さえる道具。フォームを変えずにキーを上げられる。'],
+  ['キー（調）','曲の中心になる音とスケール。「キー G」は G メジャースケールの音でできた曲。'],
+  ['コード（和音）','複数の音を同時に鳴らしたもの。基本はルート・3度・5度の3音。'],
+  ['コード進行','コードを並べた流れ。ローマ数字（I・IV・V…）で表すとキーが変わっても同じに扱える。'],
+  ['サブドミナント','キーの IV（と ii）のコード。トニックから少し離れた、広がりのある役割。'],
+  ['シャープ（♯）／フラット（♭）','♯は半音上げる、♭は半音下げる記号。'],
+  ['小節','拍をいくつかずつ区切ったまとまり。4/4拍子なら4拍で1小節。'],
+  ['スケール（音階）','決まった間隔で並べた音の集まり。メジャースケール＝ドレミファソラシド。'],
+  ['ストローク','腕を振って複数の弦をまとめて鳴らす弾き方。'],
+  ['セブンス','3つの音のコードに7度の音を足したコード。C7、Cmaj7、Cm7 など。'],
+  ['ダイアトニックコード','1つのキーのスケールの音だけで作れる7つのコード。'],
+  ['ダウンストローク','ピックを上（6弦側）から下へ振り下ろして弾くこと。表拍で使う。'],
+  ['チューニング','各弦の音の高さを合わせること。標準は6弦から E・A・D・G・B・E。'],
+  ['TAB譜（タブ譜）','弦とフレットの番号で書いたギター用の楽譜。'],
+  ['ドミナント','キーの V のコード。トニックに戻りたくなる緊張感のある役割。'],
+  ['トニック','キーの I（と vi・iii）のコード。いちばん落ち着く「家」の役割。'],
+  ['ナット','ヘッド側で弦を支えている部品。0フレットにあたる。'],
+  ['バレー（セーハ）','1本の指で複数の弦をまとめて押さえること。F や Bm で使う。'],
+  ['パワーコード','ルートと5度だけのコード。C5 のように書く。ロックの基本。'],
+  ['半音／全音','半音は1フレットぶん、全音は2フレットぶんの距離。'],
+  ['BPM','テンポの単位。1分間の拍の数。'],
+  ['フレット','指板にある金属の棒。1つ進むと半音上がる。'],
+  ['平行調','同じ音を使うメジャーキーとマイナーキーの組。C と Am、G と Em など。'],
+  ['ペンタトニック','5つの音でできたスケール。アドリブの第一歩に使われる。'],
+  ['ポジションマーク','指板の 3・5・7・9・12 フレットなどにある目印。'],
+  ['ミュート','弦に軽く触れて音を出さないようにすること。コード図では ×。'],
+  ['ルート','コードやスケールの土台になる音。C コードなら C。']
+];
+$('glossList').innerHTML = GLOSSARY.map(([t,d])=>`<details><summary>${t}</summary><p>${d}</p></details>`).join('');
+$('glossQ').oninput = e =>{ const q = e.target.value.trim().toLowerCase();
+  $('glossList').querySelectorAll('details').forEach((el,i)=>{ const hit = !q || (GLOSSARY[i][0] + GLOSSARY[i][1]).toLowerCase().includes(q); el.hidden = !hit; el.open = !!q && hit; }); };
+
 /* ---------- 曲に合わせて弾く（カポ対応） ---------- */
 // カポ c のとき「押さえるフォームのキー」は、実際のキーより半音 c 個ぶん低い
-const keyByPc = pc => KEYS.find(k=> parseNote(k).pc === ((pc%12)+12)%12);
 const progChords = (key, p) => { const d = diatonic(key);
   return p[1].map(i=> p[2] ? { root:d[i].root, ty:'7', name:d[i].root+'7', roman:ROMAN[i].toUpperCase()+'7' } : d[i]); };
 const PA = { bar:-1 };
