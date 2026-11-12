@@ -22,6 +22,7 @@
   --ok:#6cc48a; --ng:#e25c5c;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
 html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif}
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) calc(76px + env(safe-area-inset-bottom)) env(safe-area-inset-left);overscroll-behavior-y:none}
@@ -131,6 +132,32 @@ svg text{font-family:"Noto Sans JP",sans-serif}
 .score span{font-size:11px;color:var(--muted)}
 .qtext{text-align:center;font-size:15px;margin:4px 0;min-height:22px}
 
+
+/* トレーニング */
+.seg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.seg button{padding:12px 4px;font-size:15px}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#2a1a08;font-weight:700}
+.answers.small button{font-size:13px;padding:12px 2px;line-height:1.25}
+.answers button:disabled{opacity:.4}
+.tapzone{height:150px;border-radius:18px;background:var(--panel2);border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px;touch-action:none;transition:background .06s}
+.tapzone.flash{background:#4a3520}
+.tapzone.ok{border-color:var(--ok)} .tapzone.early{border-color:#5aa8e0} .tapzone.late{border-color:var(--ng)}
+.tapzone.mute{border-style:solid;border-color:#8e6fd1}
+.ruler{position:relative;height:40px;background:var(--panel2);border-radius:10px;margin:10px 0 4px;overflow:hidden}
+.ruler .zone{position:absolute;top:0;bottom:0;left:35%;width:30%;background:rgba(108,196,138,.15)}
+.ruler .center{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--ok)}
+.ruler .tk{position:absolute;top:8px;bottom:8px;width:4px;margin-left:-2px;border-radius:2px;background:var(--accent)}
+.ruler span{position:absolute;bottom:2px;font-size:10px;color:var(--muted)}
+.ruler .l{left:6px} .ruler .r{right:6px}
+.rstats{display:grid;grid-template-columns:repeat(4,1fr);text-align:center}
+.rstats b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.rstats span{font-size:11px;color:var(--muted)}
+@media (min-width:760px){
+  .seg{grid-template-columns:repeat(4,1fr)}
+  .tpanel{max-width:760px;width:100%;justify-self:center}
+  .tapzone{height:200px;font-size:18px}
+}
+
 /* ===== iPad / 横長画面 ===== */
 @media (min-width:760px){
   header{padding:22px 28px 8px;max-width:1040px} header h1{font-size:24px}
@@ -159,7 +186,7 @@ svg text{font-family:"Noto Sans JP",sans-serif}
 </style>
 </head>
 <body>
-<header><h1>🎸 ギター練習</h1><span>メトロノーム・チューナー・コード・指板</span></header>
+<header><h1>🎸 ギター練習</h1><span>メトロノーム・チューナー・コード・指板・耳トレ</span></header>
 <main>
 <div class="card a2hs" id="a2hs" hidden>
   <p class="muted">📱 共有ボタン <b>⬆︎</b> →「<b>ホーム画面に追加</b>」でアプリのように全画面で使えます。オフラインでも動きます。</p>
@@ -273,10 +300,101 @@ svg text{font-family:"Noto Sans JP",sans-serif}
     <svg class="fb" id="fb" viewBox="0 0 372 170"></svg>
     <div class="answers" id="answers"></div>
     <div class="row" style="margin-top:12px">
+      <select id="qMode"><option value="name">音名を答える</option><option value="find">場所を探す</option></select>
       <select id="qRange"><option value="5">0〜5フレット</option><option value="12" selected>0〜12フレット</option></select>
       <label class="chk"><input type="checkbox" id="qNatural" checked>♯/♭なし</label>
       <span class="grow"></span>
       <button id="qSkip">スキップ</button>
+    </div>
+  </div>
+  <div class="card wide">
+    <h2>スケール／バーチャル指板</h2>
+    <p class="muted" style="margin:0 0 10px">ポジションを目で覚えましょう。指板をタップするとその音が鳴ります（ギターがなくても運指のイメージ練習に）。</p>
+    <div class="row">
+      <select id="svKey"></select>
+      <select id="svScale" class="grow"></select>
+      <select id="svLabel"><option value="name">音名</option><option value="deg">度数</option></select>
+    </div>
+    <svg class="fb" id="sv" viewBox="0 0 372 170"></svg>
+    <div class="row">
+      <span class="muted grow" id="svNotes"></span>
+      <button class="primary" id="svPlay">▶ スケールを再生</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== トレーニング（ギターなし） ===== -->
+<section class="tab" id="tab-train">
+  <div class="card wide">
+    <h2>ギターなしでできる練習</h2>
+    <p class="muted" style="margin:0 0 10px">移動中や楽器が手元にないときに、耳・リズム感・コードの形を鍛えましょう。イヤホン推奨。</p>
+    <div class="seg" id="trainSeg">
+      <button data-m="interval">👂 音程当て</button>
+      <button data-m="chordear">🎧 コード当て</button>
+      <button data-m="rhythm">🥁 リズム</button>
+      <button data-m="form">✋ フォーム当て</button>
+    </div>
+  </div>
+
+  <div class="card wide tpanel" id="tp-interval" hidden>
+    <h2>音程当て（インターバル）</h2>
+    <div class="score" id="ivScore"></div>
+    <div class="qtext" id="ivText">「▶ 聞く」で2つの音が鳴ります。音の距離（音程）を当てよう</div>
+    <div class="row" style="justify-content:center;margin:8px 0"><button class="primary" id="ivPlay">▶ 聞く</button></div>
+    <div class="answers small" id="ivAns"></div>
+    <div class="row" style="margin-top:12px">
+      <select id="ivLevel"><option value="basic">基本の5種類</option><option value="mid">8種類</option><option value="all">全12種類</option></select>
+      <select id="ivDir"><option value="up">上行（低→高）</option><option value="down">下行（高→低）</option><option value="harm">同時に鳴らす</option></select>
+      <span class="grow"></span><button id="ivSkip">次の問題</button>
+    </div>
+    <p class="muted" style="margin:10px 0 0">覚え方のヒント：長3度＝「聖者の行進」の出だし、完全4度＝ワーグナー「結婚行進曲」の出だし、完全5度＝「きらきら星」の「きら→きら」、オクターブ＝「虹の彼方に」の出だし。</p>
+  </div>
+
+  <div class="card wide tpanel" id="tp-chordear" hidden>
+    <h2>コード当て（響きの聞き分け）</h2>
+    <div class="score" id="ceScore"></div>
+    <div class="qtext" id="ceText">「▶ 聞く」でコードが鳴ります。種類を当てよう</div>
+    <div class="row" style="justify-content:center;margin:8px 0"><button class="primary" id="cePlay">▶ 聞く</button></div>
+    <div class="answers small" id="ceAns"></div>
+    <div class="row" style="margin-top:12px">
+      <select id="ceLevel"><option value="1">初級：メジャー/マイナー</option><option value="2">中級：＋セブンス系</option><option value="3">上級：＋sus4/dim</option></select>
+      <select id="ceStyle"><option value="strum">ジャーン</option><option value="arp">アルペジオ</option></select>
+      <span class="grow"></span><button id="ceSkip">次の問題</button>
+    </div>
+  </div>
+
+  <div class="card wide tpanel" id="tp-rhythm" hidden>
+    <h2>リズム練習（タップ）</h2>
+    <p class="muted" style="margin:0 0 8px">クリックに合わせて下のパッドをタップ。ズレをミリ秒で表示します。iPad のキーボードならスペースキーでもOK。</p>
+    <div class="dots" id="dots3"></div>
+    <div class="tapzone" id="tapPad"><span id="tapLabel">スタートしてからタップ</span></div>
+    <div class="ruler" id="ruler"><div class="zone"></div><div class="center"></div><span class="l">早い</span><span class="r">遅い</span></div>
+    <div class="rstats">
+      <div><b id="rAvg">—</b><span>平均のズレ</span></div>
+      <div><b id="rSd">—</b><span>ばらつき</span></div>
+      <div><b id="rHit">—</b><span>±30ms以内</span></div>
+      <div><b id="rCnt">0</b><span>タップ数</span></div>
+    </div>
+    <div class="row" style="margin:10px 0">
+      <select id="rSub"><option value="1">4分音符</option><option value="2">8分音符</option><option value="3">3連符</option></select>
+      <label class="chk"><input type="checkbox" id="rGap">ときどきクリックを消す</label>
+      <span class="grow"></span>
+      <button data-rd="-5">−5</button><b id="rBpm" style="min-width:44px;text-align:center">90</b><button data-rd="5">+5</button>
+    </div>
+    <button class="primary bigbtn" id="rBtn">▶ スタート</button>
+    <p class="muted" style="margin:8px 0 0">「ときどきクリックを消す」：2小節鳴って2小節無音をくり返します。無音の間も同じテンポを保てるか試しましょう。</p>
+  </div>
+
+  <div class="card wide tpanel" id="tp-form" hidden>
+    <h2>フォーム当て（コードの形を覚える）</h2>
+    <div class="score" id="fmScore"></div>
+    <div class="qtext" id="fmText">このコードの名前は？</div>
+    <div style="display:flex;justify-content:center" id="fmDia"></div>
+    <div class="answers" id="fmAns"></div>
+    <div class="row" style="margin-top:12px">
+      <select id="fmPool"><option value="all">全18コード</option><option value="sel">コードタブで選んだコード</option></select>
+      <label class="chk"><input type="checkbox" id="fmSound" checked>答えたら鳴らす</label>
+      <span class="grow"></span><button id="fmSkip">スキップ</button>
     </div>
   </div>
 </section>
@@ -287,7 +405,8 @@ svg text{font-family:"Noto Sans JP",sans-serif}
   <button class="active" data-tab="metro"><span class="ic">⏱</span>メトロノーム</button>
   <button data-tab="tuner"><span class="ic">🎚</span>チューナー</button>
   <button data-tab="chord"><span class="ic">🎼</span>コード</button>
-  <button data-tab="fret"><span class="ic">🎯</span>指板クイズ</button>
+  <button data-tab="fret"><span class="ic">🎯</span>指板</button>
+  <button data-tab="train"><span class="ic">👂</span>トレーニング</button>
 </nav>
 
 <script>
@@ -392,7 +511,7 @@ document.querySelectorAll('#nav button').forEach(b=>{
 });
 
 /* ---------- メトロノーム ---------- */
-const M = { bpm:90, beats:4, accent:true, running:false, next:0, beat:0, count:0, timer:null, listeners:[] };
+const M = { bpm:90, beats:4, accent:true, running:false, next:0, beat:0, count:0, timer:null, listeners:[], times:[], mute:null };
 const $ = id => document.getElementById(id);
 
 function clickSound(t, strong){
@@ -409,7 +528,8 @@ function scheduler(){
   if(M.next < c.currentTime - 0.05) M.next = c.currentTime + 0.05;
   while(M.next < c.currentTime + 0.12){
     const b = M.beat, n = M.count, t = M.next;
-    clickSound(t, b===0 && M.accent);
+    if(!(M.mute && M.mute(n))) clickSound(t, b===0 && M.accent);
+    M.times.push(t); if(M.times.length > 8) M.times.shift(); // リズム練習の判定用
     setTimeout(()=>M.listeners.forEach(f=>f(b,n)), Math.max(0,(t-c.currentTime)*1000));
     M.next += 60 / M.bpm;
     M.beat = (b+1) % M.beats;
@@ -424,7 +544,7 @@ function scheduler(){
 function startMetro(){
   if(M.running) return;
   const c = ac();
-  M.running = true; M.beat = 0; M.count = 0; M.next = c.currentTime + 0.08;
+  M.running = true; M.beat = 0; M.count = 0; M.next = c.currentTime + 0.08; M.times = [];
   M.timer = setInterval(scheduler, 25); scheduler();
   keepAwake('metro', true);
   updateButtons();
@@ -433,6 +553,10 @@ function stopMetro(){
   M.running = false; clearInterval(M.timer);
   keepAwake('metro', false);
   chordMode = false;
+  if(typeof rhythmMode !== 'undefined' && rhythmMode){
+    rhythmMode = false; M.mute = null;
+    const pad = $('tapPad'); pad.className = 'tapzone'; $('tapLabel').textContent = 'スタートしてからタップ';
+  }
   const jb = document.getElementById('judgeBadge'); if(jb) jb.hidden = true;
   document.querySelectorAll('.dot').forEach(d=>d.classList.remove('hit'));
   updateButtons();
@@ -441,19 +565,21 @@ function updateButtons(){
   const mb = $('metroBtn'), cb = $('chordBtn');
   mb.textContent = M.running ? '■ ストップ' : '▶ スタート'; mb.classList.toggle('on', M.running);
   cb.textContent = (M.running && chordMode) ? '■ ストップ' : '▶ スタート'; cb.classList.toggle('on', M.running && chordMode);
+  const rb = $('rBtn'), rOn = M.running && typeof rhythmMode !== 'undefined' && rhythmMode;
+  rb.textContent = rOn ? '■ ストップ' : '▶ スタート'; rb.classList.toggle('on', rOn);
 }
 function setBpm(v){
   M.bpm = Math.max(30, Math.min(240, Math.round(v)));
-  $('bpmVal').textContent = M.bpm; $('bpmRange').value = M.bpm; $('bpmMirror').textContent = M.bpm;
+  $('bpmVal').textContent = M.bpm; $('bpmRange').value = M.bpm; $('bpmMirror').textContent = M.bpm; $('rBpm').textContent = M.bpm;
   Store.set('bpm', M.bpm);
 }
 function buildDots(){
-  ['dots','dots2'].forEach(id=>{
+  ['dots','dots2','dots3'].forEach(id=>{
     $(id).innerHTML = Array.from({length:M.beats},(_,i)=>`<div class="dot${i===0?' first':''}"></div>`).join('');
   });
 }
 M.listeners.push(b=>{
-  ['dots','dots2'].forEach(id=>{
+  ['dots','dots2','dots3'].forEach(id=>{
     const ds = $(id).children;
     for(let i=0;i<ds.length;i++) ds[i].classList.toggle('hit', i===b);
   });
@@ -740,11 +866,14 @@ function judgeLoop(t){
   requestAnimationFrame(judgeLoop);
 }
 
-/* ---------- 指板クイズ ---------- */
+/* ---------- 指板クイズ・スケール表示 ---------- */
 const fb = $('fb');
 const NUT = 26, FW = 28, SY = i => 16 + i*24; // i=0 が1弦（上）
 const fretX = f => f===0 ? 12 : NUT + FW*f - FW/2;
-function drawBoard(target){
+const OPEN_TOP = [64,59,55,50,45,40]; // 1弦→6弦
+const noteAt = (s,f) => NOTE[(OPEN_TOP[s]+f)%12];
+// marks: [{s,f,fill,label,text,ring,pulse}]
+function boardSVG(marks=[]){
   let s = `<rect x="${NUT}" y="${SY(0)-8}" width="${FW*12}" height="${SY(5)-SY(0)+16}" fill="#3b2a1b" rx="3"/>`;
   [3,5,7,9].forEach(f=> s += `<circle cx="${fretX(f)}" cy="${(SY(2)+SY(3))/2}" r="5" fill="#5a4530"/>`);
   s += `<circle cx="${fretX(12)}" cy="${(SY(1)+SY(2))/2}" r="5" fill="#5a4530"/><circle cx="${fretX(12)}" cy="${(SY(3)+SY(4))/2}" r="5" fill="#5a4530"/>`;
@@ -757,60 +886,385 @@ function drawBoard(target){
     s += `<line x1="4" x2="${NUT+FW*12}" y1="${SY(i)}" y2="${SY(i)}" stroke="#d8c7ae" stroke-width="${0.8+i*0.35}"/>`;
     s += `<text x="${NUT+FW*12+6}" y="${SY(i)+4}" font-size="10" fill="#b3a28c">${i+1}</text>`;
   }
-  if(target){
-    s += `<circle cx="${fretX(target.f)}" cy="${SY(target.s)}" r="10" fill="#f0a33a" stroke="#fff" stroke-width="2"><animate attributeName="r" values="9;11;9" dur="1.2s" repeatCount="indefinite"/></circle>`;
-    if(target.reveal) s += `<text x="${fretX(target.f)}" y="${SY(target.s)+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#2a1a08">${target.reveal}</text>`;
-  }
-  fb.innerHTML = s;
+  marks.forEach(m=>{
+    const x = fretX(m.f), y = SY(m.s), r = m.r || 9;
+    s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${m.fill||'#f0a33a'}" stroke="${m.ring||'none'}" stroke-width="2">` +
+      (m.pulse ? `<animate attributeName="r" values="${r};${r+2};${r}" dur="1.2s" repeatCount="indefinite"/>` : '') + `</circle>`;
+    if(m.label) s += `<text x="${x}" y="${y+3.5}" text-anchor="middle" font-size="${m.label.length>2?8:9.5}" font-weight="700" fill="${m.text||'#2a1a08'}">${m.label}</text>`;
+  });
+  return s;
 }
-const OPEN_TOP = [64,59,55,50,45,40]; // 1弦→6弦
+// タップ位置 → {s,f}（SVG の座標に変換して判定）
+function boardHit(svg, e){
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const m = svg.getScreenCTM(); if(!m) return null;
+  const p = pt.matrixTransform(m.inverse());
+  const s = Math.round((p.y - 16) / 24);
+  if(s < 0 || s > 5 || Math.abs(p.y - SY(s)) > 13) return null;
+  if(p.x < 0 || p.x > NUT + FW*12) return null;
+  const f = p.x < NUT ? 0 : Math.min(12, Math.ceil((p.x - NUT) / FW));
+  return {s, f};
+}
+const playPos = (s,f) => pluck(midiFreq(OPEN_TOP[s] + f), null, 0.5);
+
 const Q = { correct:0, total:0, streak:0, best:0, cur:null, locked:false };
-try{ Q.best = +localStorage.getItem('gtr_best') || 0; }catch(e){}
+Q.best = Store.get('best', 0);
+const findMode = ()=> $('qMode').value === 'find';
+function drawBoard(target, extra=[]){
+  const marks = [...extra];
+  if(target) marks.push({s:target.s, f:target.f, r:10, ring:'#fff', pulse:true, label:target.reveal});
+  fb.innerHTML = boardSVG(marks);
+}
 function updScore(){ $('sCorrect').textContent=Q.correct; $('sTotal').textContent=Q.total; $('sStreak').textContent=Q.streak; $('sBest').textContent=Q.best; }
 function buildAnswers(){
   const nat = $('qNatural').checked;
   const list = nat ? ['C','D','E','F','G','A','B'] : NOTE;
-  $('answers').style.gridTemplateColumns = nat ? 'repeat(4,1fr)' : 'repeat(4,1fr)';
   $('answers').innerHTML = list.map(n=>`<button data-n="${n}">${n.replace('#','♯')}</button>`).join('');
   document.querySelectorAll('#answers button').forEach(b=> b.onclick = ()=> answer(b));
+  $('answers').hidden = findMode();
 }
 function newQuestion(){
   const max = +$('qRange').value, nat = $('qNatural').checked;
   let s, f, n, guard = 0;
   do{
     s = Math.floor(Math.random()*6); f = Math.floor(Math.random()*(max+1));
-    n = NOTE[(OPEN_TOP[s]+f)%12]; guard++;
-  } while(((nat && n.includes('#')) || (Q.cur && Q.cur.s===s && Q.cur.f===f)) && guard<200);
+    n = noteAt(s,f); guard++;
+  } while(((nat && n.includes('#')) || (Q.cur && Q.cur.s===s && (findMode() ? Q.cur.n===n : Q.cur.f===f))) && guard<200);
   Q.cur = {s, f, n}; Q.locked = false;
-  $('qText').textContent = `${s+1}弦 ${f===0?'開放':f+'フレット'} の音は？`;
-  document.querySelectorAll('#answers button').forEach(b=> b.className='');
-  drawBoard(Q.cur);
+  if(findMode()){
+    $('qText').innerHTML = `<b>${s+1}弦</b> の <b style="color:var(--accent)">${NOTE_JP[n] || n.replace('#','♯')}</b> をタップ（0〜${max}フレット）`;
+    drawBoard(null);
+  } else {
+    $('qText').textContent = `${s+1}弦 ${f===0?'開放':f+'フレット'} の音は？`;
+    document.querySelectorAll('#answers button').forEach(b=> b.className='');
+    drawBoard(Q.cur);
+  }
+}
+function scoreResult(ok){
+  Q.total++;
+  if(ok){
+    Q.correct++; Q.streak++;
+    if(Q.streak > Q.best){ Q.best = Q.streak; Store.set('best', Q.best); }
+  } else Q.streak = 0;
+  Q.locked = true; updScore();
+  setTimeout(newQuestion, ok ? 650 : 1600);
 }
 function answer(btn){
   if(Q.locked) return;
   const ok = btn.dataset.n === Q.cur.n;
-  Q.total++;
-  pluck(midiFreq(OPEN_TOP[Q.cur.s] + Q.cur.f), null, 0.5);
+  playPos(Q.cur.s, Q.cur.f);
   if(ok){
-    Q.correct++; Q.streak++;
-    if(Q.streak > Q.best){ Q.best = Q.streak; try{ localStorage.setItem('gtr_best', Q.best); }catch(e){} }
-    btn.className = 'ok'; Q.locked = true;
+    btn.className = 'ok';
     $('qText').textContent = `正解！ ${NOTE_JP[Q.cur.n] || Q.cur.n}`;
-    setTimeout(newQuestion, 650);
   } else {
-    Q.streak = 0; btn.className = 'ng'; Q.locked = true;
+    btn.className = 'ng';
     document.querySelectorAll('#answers button').forEach(b=>{ if(b.dataset.n===Q.cur.n) b.className='ok'; });
     $('qText').textContent = `正解は ${NOTE_JP[Q.cur.n] || Q.cur.n.replace('#','♯')}`;
     drawBoard({...Q.cur, reveal:Q.cur.n.replace('#','♯')});
-    setTimeout(newQuestion, 1400);
   }
-  updScore();
+  scoreResult(ok);
 }
-['qRange','qNatural'].forEach(persist);
+// 「場所を探す」モード：指板をタップして回答
+fb.addEventListener('pointerdown', e=>{
+  if(!findMode() || Q.locked || !Q.cur) return;
+  const h = boardHit(fb, e); if(!h) return;
+  e.preventDefault();
+  playPos(h.s, h.f);
+  const max = +$('qRange').value, lbl = Q.cur.n.replace('#','♯');
+  const ok = h.s === Q.cur.s && noteAt(h.s,h.f) === Q.cur.n && h.f <= max;
+  const answers = [];
+  for(let f=0; f<=max; f++) if(noteAt(Q.cur.s,f) === Q.cur.n) answers.push(f);
+  if(ok){
+    $('qText').textContent = `正解！ ${Q.cur.s+1}弦 ${h.f===0?'開放':h.f+'フレット'}`;
+    drawBoard(null, answers.map(f=>({s:Q.cur.s, f, fill: f===h.f ? 'var(--ok)' : '#4f8a62', label:lbl})));
+  } else {
+    $('qText').textContent = `そこは ${noteAt(h.s,h.f).replace('#','♯')}。正解は ${answers.map(f=>f===0?'開放':f+'フレット').join(' / ')}`;
+    drawBoard(null, [{s:h.s, f:h.f, fill:'var(--ng)', label:noteAt(h.s,h.f).replace('#','♯'), text:'#fff'},
+      ...answers.map(f=>({s:Q.cur.s, f, fill:'var(--ok)', label:lbl}))]);
+  }
+  scoreResult(ok);
+});
+['qRange','qNatural','qMode'].forEach(persist);
 $('qSkip').onclick = newQuestion;
 $('qRange').onchange = newQuestion;
 $('qNatural').onchange = ()=>{ buildAnswers(); newQuestion(); };
+$('qMode').onchange = ()=>{ Q.cur = null; buildAnswers(); newQuestion(); };
 buildAnswers(); updScore(); newQuestion();
+
+// スケール表示（タップで音が鳴るバーチャル指板）
+const SCALES = {
+  minpenta:{n:'マイナーペンタトニック', iv:[0,3,5,7,10], deg:['R','♭3','4','5','♭7']},
+  majpenta:{n:'メジャーペンタトニック', iv:[0,2,4,7,9], deg:['R','2','3','5','6']},
+  blues:{n:'ブルース', iv:[0,3,5,6,7,10], deg:['R','♭3','4','♭5','5','♭7']},
+  major:{n:'メジャー（イオニアン）', iv:[0,2,4,5,7,9,11], deg:['R','2','3','4','5','6','7']},
+  minor:{n:'ナチュラルマイナー', iv:[0,2,3,5,7,8,10], deg:['R','2','♭3','4','5','♭6','♭7']},
+  chord:{n:'メジャーコードトーン', iv:[0,4,7], deg:['R','3','5']},
+  mchord:{n:'マイナーコードトーン', iv:[0,3,7], deg:['R','♭3','5']}
+};
+const sv = $('sv');
+$('svKey').innerHTML = NOTE.map((n,i)=>`<option value="${i}">${n.replace('#','♯')}</option>`).join('');
+$('svScale').innerHTML = Object.entries(SCALES).map(([k,v])=>`<option value="${k}">${v.n}</option>`).join('');
+$('svKey').value = 9; $('svScale').value = 'minpenta';
+['svKey','svScale','svLabel'].forEach(persist);
+let svHi = null, svTimer = null;
+function drawScale(){
+  const key = +$('svKey').value, sc = SCALES[$('svScale').value], deg = $('svLabel').value === 'deg';
+  const marks = [];
+  for(let s=0;s<6;s++) for(let f=0;f<=12;f++){
+    const k = sc.iv.indexOf(((OPEN_TOP[s]+f)%12 - key + 12)%12);
+    if(k < 0) continue;
+    const hi = svHi && svHi.s===s && svHi.f===f;
+    marks.push({s, f, r: hi ? 11 : 9, fill: k===0 ? 'var(--accent2)' : 'var(--accent)', ring: hi ? '#fff' : 'none',
+      label: deg ? sc.deg[k] : noteAt(s,f).replace('#','♯'), text: k===0 ? '#fff' : '#2a1a08'});
+  }
+  if(svHi && !marks.some(m=>m.s===svHi.s && m.f===svHi.f)) marks.push({s:svHi.s, f:svHi.f, r:8, fill:'#6d5a45', ring:'#fff', label:noteAt(svHi.s,svHi.f).replace('#','♯'), text:'#fff'});
+  sv.innerHTML = boardSVG(marks);
+  $('svNotes').textContent = '構成音: ' + sc.iv.map(i=>NOTE[(key+i)%12].replace('#','♯')).join(' - ');
+}
+function flash(s,f){ svHi = {s,f}; drawScale(); clearTimeout(svTimer); svTimer = setTimeout(()=>{ svHi = null; drawScale(); }, 350); }
+sv.addEventListener('pointerdown', e=>{
+  const h = boardHit(sv, e); if(!h) return;
+  e.preventDefault(); playPos(h.s, h.f); flash(h.s, h.f);
+});
+['svKey','svScale','svLabel'].forEach(id=> $(id).addEventListener('change', drawScale));
+// ▶ 再生：6弦のルートから1オクターブ上がって下がる（実際のポジションを光らせる）
+let svPlaying = null;
+$('svPlay').onclick = ()=>{
+  if(svPlaying){ svPlaying.forEach(clearTimeout); svPlaying = null; $('svPlay').textContent = '▶ スケールを再生'; return; }
+  const key = +$('svKey').value, sc = SCALES[$('svScale').value];
+  const root = 40 + ((key - 4 + 12) % 12);
+  const up = [...sc.iv.map(i=>root+i), root+12], seq = [...up, ...up.slice(0,-1).reverse()];
+  // 各音をなるべく低いフレット寄りのポジションに割り当てる
+  const lo = Math.max(0, (key - 4 + 12) % 12 - 1);
+  const posOf = m => { for(let s=5;s>=0;s--){ const f = m - OPEN_TOP[s]; if(f>=lo && f<=lo+4) return {s,f}; }
+    for(let s=5;s>=0;s--){ const f = m - OPEN_TOP[s]; if(f>=0 && f<=12) return {s,f}; } return null; };
+  const step = 60 / M.bpm / 2 * 1000; // メトロノームの BPM の8分音符
+  $('svPlay').textContent = '■ 停止';
+  svPlaying = seq.map((m,i)=> setTimeout(()=>{
+    pluck(midiFreq(m), null, 0.5); const p = posOf(m); if(p) flash(p.s, p.f);
+    if(i === seq.length-1){ svPlaying = null; $('svPlay').textContent = '▶ スケールを再生'; }
+  }, i*step));
+};
+drawScale();
+
+/* ---------- トレーニング（ギターなしでできる練習） ---------- */
+// モード切り替え
+function setTrainMode(m){
+  document.querySelectorAll('#trainSeg button').forEach(b=> b.classList.toggle('on', b.dataset.m===m));
+  document.querySelectorAll('.tpanel').forEach(p=> p.hidden = p.id !== 'tp-'+m);
+  Store.set('trainMode', m);
+}
+document.querySelectorAll('#trainSeg button').forEach(b=> b.onclick = ()=> setTrainMode(b.dataset.m));
+setTrainMode(Store.get('trainMode', 'interval'));
+
+// 汎用クイズ（スコア・連続正解・ベスト記録つき）
+function makeQuiz(o){
+  const st = { c:0, t:0, s:0, b:Store.get('best_'+o.key, 0), q:null, locked:false };
+  const ids = ['C','T','S','B'].map(x=>o.key+x);
+  $(o.score).innerHTML = [['正解'],['回答'],['連続'],['最高連続']].map((l,i)=>`<div><b id="${ids[i]}">0</b><span>${l}</span></div>`).join('');
+  const upd = ()=> [st.c, st.t, st.s, st.b].forEach((v,i)=> $(ids[i]).textContent = v);
+  function build(){
+    $(o.ans).innerHTML = o.choices().map(c=>`<button data-v="${c.v}">${c.label}</button>`).join('');
+    $(o.ans).querySelectorAll('button').forEach(b=> b.onclick = ()=> answer(b));
+  }
+  function next(){
+    st.q = o.make(st.q); st.locked = false;
+    $(o.ans).querySelectorAll('button').forEach(b=> b.className = '');
+    $(o.text).textContent = o.prompt ? o.prompt(st.q) : '';
+    if(o.play) setTimeout(()=> o.play(st.q), 150);
+  }
+  function answer(btn){
+    if(!st.q){ next(); return; }
+    if(st.locked) return;
+    const ok = btn.dataset.v === String(st.q.answer);
+    st.t++; st.locked = true;
+    if(ok){ st.c++; st.s++; if(st.s > st.b){ st.b = st.s; Store.set('best_'+o.key, st.b); } btn.className = 'ok'; }
+    else { st.s = 0; btn.className = 'ng';
+      $(o.ans).querySelectorAll('button').forEach(b=>{ if(b.dataset.v===String(st.q.answer)) b.className='ok'; }); }
+    $(o.text).textContent = (ok ? '✓ 正解！ ' : '✗ ') + o.explain(st.q, ok);
+    if(o.after) o.after(st.q, ok);
+    upd();
+    const [dOk, dNg] = o.delay || [1300, 2400];
+    setTimeout(next, ok ? dOk : dNg);
+  }
+  upd(); build();
+  return { st, build, next, answer, replay(){ st.q ? o.play(st.q) : next(); } };
+}
+const rnd = n => Math.floor(Math.random()*n);
+const pick = a => a[rnd(a.length)];
+const pcLabel = m => NOTE[((m%12)+12)%12].replace('#','♯');
+
+// --- 音程当て ---
+const INTERVALS = [
+  {v:1, label:'短2度', hint:'半音'}, {v:2, label:'長2度', hint:'全音'}, {v:3, label:'短3度', hint:'暗い3度'}, {v:4, label:'長3度', hint:'明るい3度'},
+  {v:5, label:'完全4度'}, {v:6, label:'増4度', hint:'トライトーン'}, {v:7, label:'完全5度', hint:'パワーコード'}, {v:8, label:'短6度'},
+  {v:9, label:'長6度'}, {v:10, label:'短7度'}, {v:11, label:'長7度'}, {v:12, label:'オクターブ'}
+];
+const IV_LEVEL = { basic:[2,4,5,7,12], mid:[2,3,4,5,7,9,10,12], all:[1,2,3,4,5,6,7,8,9,10,11,12] };
+const ivQuiz = makeQuiz({
+  key:'iv', delay:[2300, 3300], score:'ivScore', text:'ivText', ans:'ivAns',
+  choices: ()=> INTERVALS.filter(x=> IV_LEVEL[$('ivLevel').value].includes(x.v)),
+  make(prev){
+    const pool = IV_LEVEL[$('ivLevel').value];
+    let iv; do{ iv = pick(pool); } while(prev && iv===prev.answer && pool.length>2 && Math.random()<0.7);
+    const dir = $('ivDir').value, low = 45 + rnd(12); // A2〜G#3 を基準に
+    return { answer: iv, a: dir==='down' ? low+iv : low, b: dir==='down' ? low : low+iv, harm: dir==='harm' };
+  },
+  prompt: ()=> '音程は？（「▶ 聞く」でもう一度）',
+  play(q){
+    const t = ac().currentTime + 0.05;
+    pluck(midiFreq(q.a), t, 0.5); pluck(midiFreq(q.b), q.harm ? t : t + 0.75, 0.5);
+  },
+  explain(q){
+    const x = INTERVALS.find(i=>i.v===q.answer);
+    return `${x.label}${x.hint ? '（'+x.hint+'）' : ''}：${pcLabel(q.a)} → ${pcLabel(q.b)}`;
+  },
+  after(q){ setTimeout(()=> this.play(q), 200); }
+});
+$('ivPlay').onclick = ()=> ivQuiz.replay();
+$('ivSkip').onclick = ()=> ivQuiz.next();
+['ivLevel','ivDir'].forEach(persist);
+$('ivLevel').addEventListener('change', ()=>{ ivQuiz.build(); ivQuiz.st.q = null; $('ivText').textContent = '「▶ 聞く」でスタート'; });
+
+// --- コード当て ---
+const CTYPES = [
+  {v:'M', label:'メジャー', sym:'', iv:[0,4,7], lv:1, desc:'明るい'},
+  {v:'m', label:'マイナー', sym:'m', iv:[0,3,7], lv:1, desc:'暗い・切ない'},
+  {v:'7', label:'セブンス', sym:'7', iv:[0,4,7,10], lv:2, desc:'ブルージー・次に進みたがる'},
+  {v:'M7', label:'メジャー7', sym:'maj7', iv:[0,4,7,11], lv:2, desc:'おしゃれ・浮遊感'},
+  {v:'m7', label:'マイナー7', sym:'m7', iv:[0,3,7,10], lv:2, desc:'柔らかい暗さ'},
+  {v:'sus4', label:'sus4', sym:'sus4', iv:[0,5,7], lv:3, desc:'宙ぶらりん'},
+  {v:'dim', label:'ディミニッシュ', sym:'dim', iv:[0,3,6], lv:3, desc:'不安・緊張'}
+];
+const ceQuiz = makeQuiz({
+  key:'ce', delay:[2500, 3500], score:'ceScore', text:'ceText', ans:'ceAns',
+  choices: ()=> CTYPES.filter(c=> c.lv <= +$('ceLevel').value),
+  make(){
+    const pool = CTYPES.filter(c=> c.lv <= +$('ceLevel').value), c = pick(pool), root = 40 + rnd(12);
+    // ギターらしいボイシング：ルート＋1オクターブ上に構成音を重ねる
+    const notes = [root, root+7, ...c.iv.map(i=>root+12+i), root+24].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>a-b);
+    if(c.v==='dim') notes.splice(notes.indexOf(root+7), 1);
+    return { answer:c.v, root, notes, c };
+  },
+  prompt: ()=> 'このコードの種類は？',
+  play(q){
+    const t = ac().currentTime + 0.05, arp = $('ceStyle').value === 'arp';
+    q.notes.forEach((m,i)=> pluck(midiFreq(m), t + i*(arp ? 0.22 : 0.03), arp ? 0.4 : 0.3));
+  },
+  explain: q => `${pcLabel(q.root)}${q.c.sym}（${q.c.label}・${q.c.desc}）＝ ${q.c.iv.map(i=>pcLabel(q.root+i)).join('・')}`,
+  after(q){ setTimeout(()=> this.play(q), 200); }
+});
+$('cePlay').onclick = ()=> ceQuiz.replay();
+$('ceSkip').onclick = ()=> ceQuiz.next();
+['ceLevel','ceStyle'].forEach(persist);
+$('ceLevel').addEventListener('change', ()=>{ ceQuiz.build(); ceQuiz.st.q = null; $('ceText').textContent = '「▶ 聞く」でスタート'; });
+
+// --- フォーム当て ---
+const fmQuiz = makeQuiz({
+  key:'fm', score:'fmScore', text:'fmText', ans:'fmAns',
+  choices: ()=> [],
+  make(prev){
+    const all = Object.keys(CHORDS), pool = $('fmPool').value==='sel' && selected.size >= 2 ? [...selected] : all;
+    let name; do{ name = pick(pool); } while(prev && name===prev.answer && pool.length>1);
+    // 選択肢：正解＋紛らわしいもの優先の3つ
+    const root = name.charAt(0);
+    const similar = all.filter(n=> n!==name && n.charAt(0)===root);
+    const others = all.filter(n=> n!==name && !similar.includes(n)).sort(()=>Math.random()-0.5);
+    const opts = [name, ...similar.sort(()=>Math.random()-0.5).slice(0,2), ...others].slice(0,4).sort(()=>Math.random()-0.5);
+    $('fmAns').innerHTML = opts.map(n=>`<button data-v="${n}">${n}</button>`).join('');
+    $('fmAns').querySelectorAll('button').forEach(b=> b.onclick = ()=> fmQuiz.answer(b));
+    $('fmDia').innerHTML = diagram(name, 150);
+    return { answer:name };
+  },
+  prompt: ()=> 'このコードの名前は？',
+  explain: q => `${q.answer}：${[...chordPcs(q.answer)].map(pcName).join('・')}`,
+  after(q){ if($('fmSound').checked) strum(chordFrets(q.answer)); }
+});
+$('fmSkip').onclick = ()=> fmQuiz.next();
+['fmPool','fmSound'].forEach(persist);
+$('fmPool').addEventListener('change', ()=> fmQuiz.next());
+fmQuiz.next();
+
+// --- リズム練習 ---
+let rhythmMode = false;
+const R = { offs:[], muted:false };
+document.querySelectorAll('[data-rd]').forEach(b=> b.onclick = ()=> setBpm(M.bpm + +b.dataset.rd));
+['rSub','rGap'].forEach(persist);
+function rhythmReset(){
+  R.offs = []; R.muted = false;
+  $('ruler').querySelectorAll('.tk').forEach(e=>e.remove());
+  ['rAvg','rSd','rHit'].forEach(id=> $(id).textContent = '—'); $('rCnt').textContent = 0;
+}
+function startRhythm(){
+  if(M.running) stopMetro();
+  rhythmReset(); rhythmMode = true;
+  // 2小節鳴らして2小節消す（最初の2小節は必ず鳴らす）
+  M.mute = n => $('rGap').checked && Math.floor(n / M.beats) % 4 >= 2;
+  $('tapLabel').textContent = 'ここをタップ';
+  startMetro();
+}
+$('rBtn').onclick = ()=> (M.running && rhythmMode) ? stopMetro() : startRhythm();
+M.listeners.push((b,n)=>{
+  if(!rhythmMode) return;
+  const muted = !!(M.mute && M.mute(n));
+  if(muted !== R.muted || b===0){
+    R.muted = muted;
+    $('tapPad').classList.toggle('mute', muted);
+    $('tapLabel').textContent = muted ? '🔇 無音中 — テンポをキープ！' : 'ここをタップ';
+  }
+});
+// タップ時刻をオーディオの時間軸に変換（出力遅延も考慮）
+function tapAudioTime(e){
+  const c = ac();
+  if(c.getOutputTimestamp){
+    const ts = c.getOutputTimestamp();
+    if(ts && ts.contextTime > 0 && ts.performanceTime > 0){
+      const evT = (e && e.timeStamp > 0 && e.timeStamp < performance.now() + 1000) ? e.timeStamp : performance.now();
+      return ts.contextTime + (evT - ts.performanceTime) / 1000;
+    }
+  }
+  return c.currentTime - (c.outputLatency || 0) - (c.baseLatency || 0);
+}
+function rhythmTap(e){
+  const pad = $('tapPad');
+  pad.classList.add('flash'); setTimeout(()=>pad.classList.remove('flash'), 80);
+  if(!(M.running && rhythmMode) || !M.times.length) return;
+  const t = tapAudioTime(e), beatLen = 60 / M.bpm, sub = +$('rSub').value, g = beatLen / sub;
+  // 直近の拍から最も近いグリッドを探す
+  let best = null;
+  M.times.forEach(bt=>{
+    for(let k=-1; k<=sub; k++){
+      const gt = bt + k*g, d = t - gt;
+      if(!best || Math.abs(d) < Math.abs(best.d)) best = { d, gt };
+    }
+  });
+  if(!best || Math.abs(best.d) > g/2) return;
+  const ms = Math.round(best.d * 1000);
+  R.offs.push(ms); if(R.offs.length > 200) R.offs.shift();
+  // 表示
+  const range = Math.min(150, g*500); // ルーラーの端 = ±range ms
+  const tk = document.createElement('div'); tk.className = 'tk';
+  tk.style.left = (50 + Math.max(-50, Math.min(50, ms / range * 50))) + '%';
+  $('ruler').appendChild(tk);
+  const tks = $('ruler').querySelectorAll('.tk');
+  tks.forEach((el,i)=> el.style.opacity = (0.25 + 0.75*(i+1)/tks.length).toFixed(2));
+  if(tks.length > 12) tks[0].remove();
+  $('ruler').querySelector('.zone').style.cssText = `left:${50-30/range*50}%;width:${60/range*50}%`;
+  const recent = R.offs.slice(-16), avg = recent.reduce((a,b)=>a+b,0)/recent.length;
+  const sd = Math.sqrt(recent.reduce((a,b)=>a+(b-avg)*(b-avg),0)/recent.length);
+  $('rAvg').textContent = (avg>0?'+':'') + Math.round(avg) + 'ms';
+  $('rSd').textContent = Math.round(sd) + 'ms';
+  $('rHit').textContent = Math.round(R.offs.filter(x=>Math.abs(x)<=30).length / R.offs.length * 100) + '%';
+  $('rCnt').textContent = R.offs.length;
+  pad.classList.remove('ok','early','late');
+  pad.classList.add(Math.abs(ms) <= 30 ? 'ok' : ms < 0 ? 'early' : 'late');
+  if(!R.muted) $('tapLabel').textContent = Math.abs(ms) <= 30 ? `ぴったり！ (${ms>0?'+':''}${ms}ms)` : ms < 0 ? `少し早い (${ms}ms)` : `少し遅い (+${ms}ms)`;
+}
+$('tapPad').addEventListener('pointerdown', e=>{ e.preventDefault(); rhythmTap(e); });
+document.addEventListener('keydown', e=>{
+  if(e.code !== 'Space' || e.repeat || !$('tab-train').classList.contains('active') || $('tp-rhythm').hidden) return;
+  e.preventDefault(); rhythmTap(e);
+});
 
 /* ---------- ホーム画面追加の案内・オフライン対応 ---------- */
 const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
