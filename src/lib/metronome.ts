@@ -1,6 +1,7 @@
 /** メトロノームのエンジン（React の外に1つだけ持つ）。コード練習・リズム練習もこれを共有する */
 import { useSyncExternalStore } from 'react';
-import { ac, clickSound } from './audio';
+import { ac, clickSound, tickSound } from './audio';
+import { subdivisionTimes } from './rhythm';
 import { Store } from './store';
 import { keepAwake } from './wake';
 
@@ -14,6 +15,8 @@ export interface MetroState {
   rampOn: boolean;
   rampBars: number;
   rampStep: number;
+  /** 1拍をいくつに刻むか（1=4分、2=8分、3=3連、4=16分） */
+  sub: number;
 }
 type BeatListener = (beat: number, count: number) => void;
 
@@ -26,6 +29,7 @@ let state: MetroState = {
   rampOn: Store.get('rampOn', false),
   rampBars: Store.get('rampBars', 4),
   rampStep: Store.get('rampStep', 5),
+  sub: Store.get('sub', 1),
 };
 const subs = new Set<() => void>();
 const beatSubs = new Set<BeatListener>();
@@ -51,7 +55,11 @@ function scheduler(): void {
     const b = beat;
     const n = count;
     const t = next;
-    if (!(mute && mute(n))) clickSound(t, b === 0 && state.accent);
+    if (!(mute && mute(n))) {
+      clickSound(t, b === 0 && state.accent);
+      // 細かい刻み（リズム練習中は、タップの手がかりになってしまうので鳴らさない）
+      if (state.mode !== 'rhythm') subdivisionTimes(t, 60 / state.bpm, state.sub).forEach(tickSound);
+    }
     times.push(t);
     if (times.length > 8) times.shift();
     setTimeout(() => beatSubs.forEach((f) => f(b, n)), Math.max(0, (t - c.currentTime) * 1000));
@@ -103,6 +111,10 @@ export const Metro = {
     beat = 0;
     Store.set('beats', beats);
     update({ beats });
+  },
+  setSub(sub: number): void {
+    Store.set('sub', sub);
+    update({ sub });
   },
   setAccent(accent: boolean): void {
     Store.set('accent', accent);

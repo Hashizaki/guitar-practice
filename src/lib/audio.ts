@@ -113,3 +113,17 @@ export function clickSound(t: number, strong: boolean): void {
   o.start(t);
   o.stop(t + 0.06);
 }
+
+/** 拍のあいだを刻む、小さめのクリック音（メトロノームの細分化用） */
+export function tickSound(t: number): void {
+  const c = ac();
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.frequency.value = 700;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.16, t + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.035);
+  o.connect(g).connect(c.destination);
+  o.start(t);
+  o.stop(t + 0.045);
+}

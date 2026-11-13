@@ -4,7 +4,7 @@ import { Check, chooseItem, Dots, ScoreBar, Select, useScore, WeakList } from '.
 import { ac, pluckMidi, strum } from '../lib/audio';
 import { Log, type LogKind } from '../lib/log';
 import { Metro, useMetro } from '../lib/metronome';
-import { tapOffsetMs } from '../lib/rhythm';
+import { clampLatency, suggestLatency, tapOffsetMs } from '../lib/rhythm';
 import type { TrainMode } from '../lib/nav';
 import { Stats } from '../lib/stats';
 import { useShared } from '../lib/store';
@@ -290,12 +290,14 @@ function RhythmPractice({ active }: { active: boolean }) {
   const m = useMetro();
   const [sub, setSub] = useShared('rSub', 1);
   const [gap, setGap] = useShared('rGap', false);
+  /** 機器の遅延の補正値（ms）。Bluetooth イヤホンなどで、いつも遅く判定されるのを打ち消す */
+  const [lat, setLat] = useShared('rLatency', 0);
   const [offs, setOffs] = useState<number[]>([]);
   const [last, setLast] = useState<number | null>(null);
   const [muted, setMuted] = useState(false);
   const [flash, setFlash] = useState(false);
-  const live = useRef({ sub, gap });
-  live.current = { sub, gap };
+  const live = useRef({ sub, gap, lat });
+  live.current = { sub, gap, lat };
   const on = m.running && m.mode === 'rhythm';
 
   useEffect(
@@ -321,8 +323,9 @@ function RhythmPractice({ active }: { active: boolean }) {
     setTimeout(() => setFlash(false), 80);
     const st = Metro.get();
     if (!(st.running && st.mode === 'rhythm')) return;
-    const ms = tapOffsetMs(tapAudioTime(timeStamp), Metro.times(), st.bpm, live.current.sub);
-    if (ms === null) return;
+    const raw = tapOffsetMs(tapAudioTime(timeStamp), Metro.times(), st.bpm, live.current.sub);
+    if (raw === null) return;
+    const ms = raw - live.current.lat;
     Log.count('rhythm');
     setLast(ms);
     setOffs((p) => [...p, ms].slice(-200));
@@ -391,10 +394,32 @@ function RhythmPractice({ active }: { active: boolean }) {
         <b style={{ minWidth: 44, textAlign: 'center' }}>{m.bpm}</b>
         <button onClick={() => Metro.setBpm(m.bpm + 5)}>+5</button>
       </div>
+      <div className="latency">
+        <span className="muted">遅延の補正</span>
+        <button onClick={() => setLat(clampLatency(lat - 10))} aria-label="補正を10ミリ秒減らす">−10</button>
+        <b data-testid="r-latency">{lat > 0 ? '+' : ''}{lat}ms</b>
+        <button onClick={() => setLat(clampLatency(lat + 10))} aria-label="補正を10ミリ秒増やす">+10</button>
+        <button
+          disabled={suggestLatency(offs, lat) === null}
+          onClick={() => {
+            const v = suggestLatency(offs, lat);
+            if (v === null) return;
+            setLat(v);
+            setOffs([]);
+            setLast(null);
+          }}
+          data-testid="r-calibrate"
+        >
+          いまのズレで合わせる
+        </button>
+      </div>
       <button className={`primary bigbtn${on ? ' on' : ''}`} onClick={start} data-testid="rhythm-btn">
         {on ? '■ ストップ' : '▶ スタート'}
       </button>
       <p className="muted" style={{ margin: '8px 0 0' }}>「ときどきクリックを消す」：2小節鳴って2小節無音をくり返します。無音の間も同じテンポを保てるか試しましょう。</p>
+      <p className="muted" style={{ margin: '6px 0 0' }}>
+        「遅延の補正」：Bluetooth イヤホンなどで、合わせているのにいつも「遅い」と出るときに使います。クリックに合わせて8回以上タップしてから「いまのズレで合わせる」を押すと、その分を差し引きます。
+      </p>
     </div>
   );
 }

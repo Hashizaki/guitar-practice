@@ -9,6 +9,7 @@ import { playChord, playShape } from '../lib/play';
 import { Seq, useSeqActive } from '../lib/seq';
 import { bestCapoFor, findShape, MAX_BARS, pairKey, parseSongText, transposeChord, type Song } from '../lib/songs';
 import { useShared } from '../lib/store';
+import { ArpeggioPractice } from './Arpeggio';
 import { keepAwake } from '../lib/wake';
 import {
   bestCapo, CHORD_NAMES, chordFrets, chordNotes, chordPcs, isBarre, KEYS, NOTE, pick, progChords, PROGS,
@@ -571,6 +572,7 @@ export function ChordTab() {
       <ChangePractice cur={pair[0]} nxt={pair[1]} setPair={setPair} badge={badge} />
       <OneMinuteChanges />
       <PlayAlong />
+      <ArpeggioPractice />
       <ChordJudge cur={pair[0]} onBadge={setBadge} />
       <ChordChart />
     </>

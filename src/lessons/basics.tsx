@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { C_HIT, C_TONE, PlayButton } from '../components/common';
 import { Fretboard, type Mark } from '../components/Fretboard';
 import { Keyboard } from '../components/Keyboard';
+import { TabStaff, type TabEvent } from '../components/TabStaff';
 import { clickSound, pluckMidi, strum } from '../lib/audio';
 import { Metro, useMetro } from '../lib/metronome';
 import { gotoTab, gotoTrain } from '../lib/nav';
@@ -160,37 +161,12 @@ const rhythm: Lesson = {
 };
 
 // ---------- 4. TAB譜の読み方 ----------
-/** 1つの音は [弦(0=1弦), フレット]。同時に鳴らす音は配列にまとめる。null は休み */
-type TabEvent = Pos[] | null;
 const P = (s: number, f: number): Pos[] => [{ s, f }];
 const SONGS: [string, TabEvent[]][] = [
   ['ドレミファソラシド', [P(4, 3), P(3, 0), P(3, 2), P(3, 3), P(2, 0), P(2, 2), P(1, 0), P(1, 1)]],
   ['きらきら星', [P(1, 1), P(1, 1), P(0, 3), P(0, 3), P(0, 5), P(0, 5), P(0, 3), null, P(0, 1), P(0, 1), P(0, 0), P(0, 0), P(1, 3), P(1, 3), P(1, 1)]],
   ['コード C', [[{ s: 4, f: 3 }, { s: 3, f: 2 }, { s: 2, f: 0 }, { s: 1, f: 1 }, { s: 0, f: 0 }]]],
 ];
-function TabStaff({ events, cur }: { events: TabEvent[]; cur: number }) {
-  const step = Math.min(34, 250 / Math.max(events.length, 1));
-  return (
-    <svg className="kb" viewBox="0 0 300 92" data-testid="tab-staff">
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <g key={i}>
-          <line x1="22" x2="296" y1={14 + i * 13} y2={14 + i * 13} stroke="#8a7660" strokeWidth="1" />
-          <text x="8" y={17.5 + i * 13} fontSize="8" fill="#b3a28c">{i + 1}弦</text>
-        </g>
-      ))}
-      <line x1="22" x2="22" y1="14" y2="79" stroke="#8a7660" strokeWidth="2" />
-      <line x1="296" x2="296" y1="14" y2="79" stroke="#8a7660" strokeWidth="2" />
-      {events.map((ev, k) =>
-        (ev ?? []).map(({ s, f }) => (
-          <g key={`${k}-${s}`}>
-            <rect x={40 + k * step - 6} y={14 + s * 13 - 6.5} width="12" height="13" rx="3" fill={k === cur ? C_HIT : 'var(--panel)'} />
-            <text x={40 + k * step} y={14 + s * 13 + 4} textAnchor="middle" fontSize="11" fontWeight="700" fill={k === cur ? '#10220f' : 'var(--text)'}>{f}</text>
-          </g>
-        )),
-      )}
-    </svg>
-  );
-}
 function TabBody() {
   const [sg, setSg] = useState(0);
   const [cur, setCur] = useState(-1);

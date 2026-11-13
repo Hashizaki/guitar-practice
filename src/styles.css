@@ -296,3 +296,8 @@ button.danger{color:var(--ng);border-color:var(--ng);background:none}
 .omstat b{display:block;font-size:30px;font-weight:900;font-variant-numeric:tabular-nums}
 .omstat span{font-size:11px;color:var(--muted)}
 .tapzone{padding:0 14px;text-align:center}
+
+/* リズム練習：遅延の補正 */
+.latency{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px;font-size:14px}
+.latency b{min-width:64px;text-align:center;font-variant-numeric:tabular-nums}
+.latency button{padding:6px 12px;font-size:14px}

@@ -18,17 +18,18 @@ recorded audio. Built with **Vite + React + TypeScript**, tested and deployed to
 | Learn (lessons) | 14 step-by-step lessons | Note names → fretboard → rhythm/strumming → reading tab → major scale → intervals → chord construction → diatonic chords → chord progressions → minor/relative keys → pentatonic improvisation → power chords → barre chords → capo and transposition. Each has interactive sound demos and a quiz (3 correct answers completes it) |
 | | Glossary | 32 beginner terms with search |
 | | Settings | Theme (dark / light / follow device), text size, left-handed display (mirrors fretboards and chord diagrams), backup export / import, erase all data |
-| Metronome | BPM 30–240, time signature, accent, tap tempo | |
+| Metronome | BPM 30–240, time signature, accent, tap tempo, subdivisions (8ths / triplets / 16ths) | |
 | | Tempo-up practice | Adds +2/+5/+10 BPM every 2/4/8 bars |
 | Tuner | Reference tones, mic tuner | Note name, Hz, cents |
 | Chords | Chord-change practice | Random changes every 2/4/8 beats in time with the metronome |
 | | One-minute changes | Count how many times you can switch between two chords in 60 s; best score per chord pair |
 | | Play along | Key, progression and strumming pattern; looping backing with count-in; capo support with a "recommended capo" button; **your own songs** (type the chords, one per bar) |
+| | Arpeggio practice | Fingerpicking patterns for any chord, shown as tab with right-hand fingers, looping demo |
 | | Chord check (optional) | Compares mic input with the notes of the target chord |
 | | Chord chart | 23 chords, tap to hear |
 | Fretboard | Note-name quiz / find-the-note mode / play-the-note mode | Play mode listens through the mic and accepts the asked note at the right pitch |
 | | Scale / virtual fretboard | Tap to play; scale playback lights up positions |
-| Training (no guitar) | Interval ear training, chord-quality ear training, rhythm tapping, chord-form quiz | |
+| Training (no guitar) | Interval ear training, chord-quality ear training, rhythm tapping (with latency compensation), chord-form quiz | |
 
 ## 3. Project layout
 
@@ -48,7 +49,7 @@ src/
     seq.ts              One-at-a-time sequencer for demos and backing loops + useSeqActive() hook
     mic.ts              Shared mic stream, chroma analysis
     pitch.ts            Pitch detection (autocorrelation), stable-note detector (pure, unit-tested)
-    rhythm.ts           Tap-to-grid offset maths (pure, unit-tested)
+    rhythm.ts           Tap-to-grid offset, latency suggestion, subdivision times (pure, unit-tested)
     songs.ts            User songs: chord-name parsing, transposition, shape lookup, capo choice (unit-tested)
     stats.ts            Per-item quiz results, weighted question choice, weak-spot list (unit-tested)
     backup.ts           Backup export / import / erase over a Storage-like object (pure, unit-tested)
@@ -114,6 +115,14 @@ tests/                  Playwright end-to-end tests (iPhone 13 and iPad Pro 11 v
 - Chord check: 12-bin chroma from FFT peaks (75–1500 Hz, ±35 cents), smoothed 0.55/0.45. A chord tone below
   0.22 is "missing"; a non-chord tone above 0.6 is "extra". **These thresholds have not been tuned on a real guitar.**
 
+### Rhythm extras
+- Metronome subdivisions: `Metro` state `sub` (1/2/3/4). The scheduler adds quiet `tickSound`s at
+  `subdivisionTimes()`; they are suppressed in rhythm-tapping mode so they do not give the answer away.
+- Latency compensation: the shared `rLatency` (ms, −100…400) is subtracted from every tap offset.
+  `suggestLatency(offsets, current)` proposes `current + median(recent offsets)` once there are 8 taps.
+- Arpeggio practice (`src/tabs/Arpeggio.tsx`): patterns are 8-character strings (`B` = the chord's lowest
+  sounding string, `1`–`3` = string numbers, `.` = rest); `arpString()` maps them to strings of the chosen chord.
+
 ### Play along and user songs
 - The selected source is the shared `paSrc`: `p<index>` for a preset in `PROGS`, `s<id>` for a user song in the
   shared `songs` list (`{id, name, chords: string[]}`, one chord per bar, max 32).
@@ -174,5 +183,5 @@ One-time setup: repository **Settings → Pages → Source: GitHub Actions**.
 
 ## 8. Ideas for future work
 
-- Latency calibration for rhythm tapping, metronome subdivisions
-- Fingerpicking pattern practice
+- Tune the chord-check thresholds on a real guitar
+- More lessons (the CAGED system, 7th-chord functions, secondary dominants)

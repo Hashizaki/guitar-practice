@@ -36,6 +36,9 @@ export function MetronomeTab() {
           <label className="muted">
             拍子 <Select value={m.beats} onChange={Metro.setBeats} options={[[2, '2'], [3, '3'], [4, '4'], [6, '6']]} />
           </label>
+          <label className="muted">
+            刻み <Select value={m.sub} onChange={Metro.setSub} options={[[1, '4分'], [2, '8分'], [3, '3連'], [4, '16分']]} testId="metro-sub" />
+          </label>
           <Check checked={m.accent} onChange={Metro.setAccent}>1拍目を強調</Check>
           <span className="grow" />
           <button onPointerDown={(e) => { e.preventDefault(); tap(); }} data-testid="tap-tempo">タップ</button>
