@@ -7,6 +7,7 @@ import { FretTab } from './tabs/FretTab';
 import { LearnTab } from './tabs/LearnTab';
 import { MetronomeTab } from './tabs/MetronomeTab';
 import { TrainTab } from './tabs/TrainTab';
+import { useApplyDisplay } from './tabs/Settings';
 import { TunerTab } from './tabs/TunerTab';
 
 const TABS: [TabName, string, string][] = [
@@ -33,6 +34,7 @@ function AddToHomeHint() {
 
 export function App() {
   const tab = useTab();
+  useApplyDisplay();
   // すべてのタブを常に置いたまま表示だけ切り替える（タブを移動しても練習の状態を保つため）
   const sec = (name: TabName) => `tab${tab === name ? ' active' : ''}`;
   return (

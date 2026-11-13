@@ -17,6 +17,7 @@ recorded audio. Built with **Vite + React + TypeScript**, tested and deployed to
 | | Today's menu | 5 small daily tasks (lesson, fretboard quiz ×10, ear training ×10, rhythm ×30 taps, chord changes 2 min) with automatic progress |
 | Learn (lessons) | 14 step-by-step lessons | Note names → fretboard → rhythm/strumming → reading tab → major scale → intervals → chord construction → diatonic chords → chord progressions → minor/relative keys → pentatonic improvisation → power chords → barre chords → capo and transposition. Each has interactive sound demos and a quiz (3 correct answers completes it) |
 | | Glossary | 32 beginner terms with search |
+| | Settings | Theme (dark / light / follow device), text size, left-handed display (mirrors fretboards and chord diagrams), backup export / import, erase all data |
 | Metronome | BPM 30–240, time signature, accent, tap tempo | |
 | | Tempo-up practice | Adds +2/+5/+10 BPM every 2/4/8 bars |
 | Tuner | Reference tones, mic tuner | Note name, Hz, cents |
@@ -46,6 +47,7 @@ src/
     seq.ts              One-at-a-time sequencer for demos and backing loops + useSeqActive() hook
     mic.ts              Shared mic stream, pitch detection (autocorrelation), chroma analysis
     rhythm.ts           Tap-to-grid offset maths (pure, unit-tested)
+    backup.ts           Backup export / import / erase over a Storage-like object (pure, unit-tested)
     log.ts              Practice log + useLogVersion() hook
     store.ts            localStorage wrapper, useShared() (persisted state shared between components)
     nav.ts              gotoTab(), gotoTrain(), scrollToId()
@@ -105,6 +107,15 @@ tests/                  Playwright end-to-end tests (iPhone 13 and iPad Pro 11 v
 - Chord check: 12-bin chroma from FFT peaks (75–1500 Hz, ±35 cents), smoothed 0.55/0.45. A chord tone below
   0.22 is "missing"; a non-chord tone above 0.6 is "extra". **These thresholds have not been tuned on a real guitar.**
 
+### Settings and backup
+- `src/tabs/Settings.tsx`: `useTheme`, `useZoom`, `useLefty` (all `useShared`). `useApplyDisplay()` (called once in
+  `App`) sets `data-theme` on `<html>` and the `--zoom` CSS variable (`header, main { zoom: var(--zoom) }`).
+- Themes are CSS variables in `styles.css` (`:root[data-theme="light"]`, and `auto` via `prefers-color-scheme`).
+  Colours that differ per theme must be variables; fixed colours are fine for the wood-coloured fretboard.
+- Left-handed display mirrors x coordinates inside `Fretboard` (`mx()`, also applied to hit testing) and `ChordDiagram`.
+- Backup file: `{app: "guitar-practice", version: 1, exportedAt, data}` where `data` holds every `gtr_*` key
+  without the prefix. Import replaces all current data and reloads the page so the singletons pick it up.
+
 ### Offline
 - `public/sw.js`: network-first for the page, cache-first for everything else. Because Vite's asset names change
   per build, the page sends the service worker the list of files it loaded so the first visit is cached too.
@@ -138,10 +149,8 @@ One-time setup: repository **Settings → Pages → Source: GitHub Actions**.
 
 ## 8. Ideas for future work
 
-- Backup / restore of the practice log and progress
 - Track weak spots in the quizzes and ask them more often
 - "Play the note" mode judged by the mic
 - One-minute chord-change counter, user-defined songs for play-along
 - Latency calibration for rhythm tapping, metronome subdivisions
-- Left-handed fretboard, light theme, text size
 - Fingerpicking pattern practice

@@ -8,6 +8,7 @@ import { gotoTab, gotoTrain } from '../lib/nav';
 import { Seq } from '../lib/seq';
 import { getShared, useShared } from '../lib/store';
 import { rnd, shuffle } from '../lib/theory';
+import { SettingsCard } from './Settings';
 
 const useDone = () => useShared<string[]>('lessonsDone', []);
 
@@ -253,6 +254,7 @@ export function LearnTab() {
       </div>
       <LessonList open={open} />
       <Glossary />
+      <SettingsCard />
     </>
   );
 }

@@ -11,6 +11,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'off',
+    actionTimeout: 10_000, // 押せないボタンを待ち続けず、早めに失敗させる
     launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
   },
   projects: [

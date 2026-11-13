@@ -2,7 +2,29 @@
   --bg:#1b1612; --panel:#262019; --panel2:#30281f; --line:#4a3d2f;
   --text:#f3e9dc; --muted:#b3a28c; --accent:#f0a33a; --accent2:#e2683c;
   --ok:#6cc48a; --ng:#e25c5c;
+  /* 強調の背景・文字など（テーマで変わるもの） */
+  --hl:#4a3520; --hl-ok:#2c3a2c; --sel:#3a2c1a; --strong:#ffd9a0; --navbg:rgba(20,16,13,.94);
+  --dia-fret:#8a7660; --dia-str:#c9b79f; --on-accent:#2a1a08;
 }
+/* ライトテーマ */
+:root[data-theme="light"]{
+  --bg:#f6efe4; --panel:#fffaf2; --panel2:#efe5d6; --line:#d3c4ad;
+  --text:#2a2119; --muted:#75644e; --accent:#e0911f; --accent2:#c9522a;
+  --ok:#3f9a62; --ng:#cf4444;
+  --hl:#f6dcae; --hl-ok:#d7ecd9; --sel:#f6dcae; --strong:#9a5400; --navbg:rgba(255,250,242,.94);
+  --dia-fret:#8a7660; --dia-str:#a8947a;
+}
+@media (prefers-color-scheme: light){
+  :root[data-theme="auto"]{
+    --bg:#f6efe4; --panel:#fffaf2; --panel2:#efe5d6; --line:#d3c4ad;
+    --text:#2a2119; --muted:#75644e; --accent:#e0911f; --accent2:#c9522a;
+    --ok:#3f9a62; --ng:#cf4444;
+    --hl:#f6dcae; --hl-ok:#d7ecd9; --sel:#f6dcae; --strong:#9a5400; --navbg:rgba(255,250,242,.94);
+    --dia-fret:#8a7660; --dia-str:#a8947a;
+  }
+}
+/* 文字の大きさ（設定で変更） */
+header,main{zoom:var(--zoom,1)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
@@ -33,7 +55,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 label.chk{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
 
 /* nav */
-nav{position:fixed;left:0;right:0;bottom:0;background:rgba(20,16,13,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);z-index:10}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--navbg);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);z-index:10}
 nav button{flex:1;background:none;border:0;border-radius:0;padding:10px 0 12px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
 nav button .ic{font-size:20px;line-height:1}
 nav button.active{color:var(--accent)}
@@ -59,7 +81,7 @@ nav button{max-width:150px}
 .strings button{padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:2px}
 .strings button b{font-size:20px}
 .strings button small{font-size:10px;color:var(--muted)}
-.strings button.sel{border-color:var(--accent);background:#3a2c1a}
+.strings button.sel{border-color:var(--accent);background:var(--sel)}
 .meter{position:relative;height:56px;background:var(--panel2);border-radius:12px;overflow:hidden;margin:12px 0 6px}
 .meter .center{position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--ok);opacity:.6}
 .meter .needle{position:absolute;top:8px;bottom:8px;width:6px;margin-left:-3px;border-radius:3px;background:var(--muted);left:50%;transition:left .1s}
@@ -123,7 +145,7 @@ svg text{font-family:"Noto Sans JP",sans-serif}
 .answers.small button{font-size:13px;padding:12px 2px;line-height:1.25}
 .answers button:disabled{opacity:.4}
 .tapzone{height:150px;border-radius:18px;background:var(--panel2);border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px;touch-action:none;transition:background .06s}
-.tapzone.flash{background:#4a3520}
+.tapzone.flash{background:var(--hl)}
 .tapzone.ok{border-color:var(--ok)} .tapzone.early{border-color:#5aa8e0} .tapzone.late{border-color:var(--ng)}
 .tapzone.mute{border-style:solid;border-color:#8e6fd1}
 .ruler{position:relative;height:40px;background:var(--panel2);border-radius:10px;margin:10px 0 4px;overflow:hidden}
@@ -154,7 +176,7 @@ svg text{font-family:"Noto Sans JP",sans-serif}
 .litem .go{flex:none;font-size:11px;font-weight:700;color:#2a1a08;background:var(--accent);border-radius:999px;padding:3px 8px}
 .ltitle{font-size:20px!important;margin:14px 0 6px!important}
 .lesson p{font-size:15px;line-height:1.85;margin:10px 0}
-.lesson b{color:#ffd9a0}
+.lesson b{color:var(--strong)}
 .lesson .row{margin:10px 0}
 .lesson .tbl{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:6px;margin:10px 0}
 .lesson .tbl div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 4px;text-align:center;font-size:12px;color:var(--muted);line-height:1.5}
@@ -174,16 +196,16 @@ svg text{font-family:"Noto Sans JP",sans-serif}
 .strokes div b{display:block;font-size:24px;line-height:1.1;color:var(--accent)}
 .strokes div.rest b{color:var(--line)}
 .strokes div span{font-size:11px;color:var(--muted)}
-.strokes div.cur{border-color:var(--ok);background:#2c3a2c}
+.strokes div.cur{border-color:var(--ok);background:var(--hl-ok)}
 .dia7{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:10px 0}
 .dia7 button{padding:8px 0;display:flex;flex-direction:column;align-items:center;gap:2px;border-width:2px}
 .dia7 button small{font-size:11px;color:var(--muted)} .dia7 button b{font-size:13px;color:var(--text)}
 .dia7 .T{border-color:var(--ok)} .dia7 .S{border-color:#5aa8e0} .dia7 .D{border-color:var(--accent2)}
-.dia7 .cur{background:#4a3520}
+.dia7 .cur{background:var(--hl)}
 .progrow{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
 .progrow div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;text-align:center;padding:8px 2px}
 .progrow div small{display:block;font-size:11px;color:var(--muted)} .progrow div b{font-size:18px;color:var(--text)}
-.progrow div.cur{border-color:var(--accent);background:#4a3520}
+.progrow div.cur{border-color:var(--accent);background:var(--hl)}
 .lquiz{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:18px;background:var(--bg)}
 .lquiz h3{margin:0 0 8px;font-size:15px;color:var(--accent);display:flex;align-items:center;gap:8px}
 #lqDots{display:inline-flex;gap:5px} #lqDots i{width:12px;height:12px;border-radius:50%;border:2px solid var(--line)} #lqDots i.on{background:var(--ok);border-color:var(--ok)}
@@ -205,7 +227,7 @@ input[type=search]{width:100%;font-family:inherit;font-size:16px;background:var(
 
 /* 曲に合わせて弾く */
 .painfo{margin:10px 0 0;line-height:1.7}
-.painfo b{color:#ffd9a0}
+.painfo b{color:var(--strong)}
 .nodia{display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:14px 4px;margin:6px auto;line-height:1.6}
 
 /* ホーム：練習記録 */
@@ -250,3 +272,9 @@ input[type=search]{width:100%;font-family:inherit;font-size:16px;background:var(
 
 /* React 版：トレーニングの各パネルを包む要素はレイアウトに影響させない */
 .tslot{display:contents}
+
+/* 設定 */
+.setrow{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.sethead{font-size:14px;margin:16px 0 6px;color:var(--text)}
+button.danger{color:var(--ng);border-color:var(--ng);background:none}
+@media (min-width:760px){ #settingsCard{max-width:780px;width:100%;justify-self:center} }

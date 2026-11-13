@@ -183,8 +183,8 @@ function TabStaff({ events, cur }: { events: TabEvent[]; cur: number }) {
       {events.map((ev, k) =>
         (ev ?? []).map(({ s, f }) => (
           <g key={`${k}-${s}`}>
-            <rect x={40 + k * step - 6} y={14 + s * 13 - 6.5} width="12" height="13" rx="3" fill={k === cur ? C_HIT : '#262019'} />
-            <text x={40 + k * step} y={14 + s * 13 + 4} textAnchor="middle" fontSize="11" fontWeight="700" fill={k === cur ? '#10220f' : '#f3e9dc'}>{f}</text>
+            <rect x={40 + k * step - 6} y={14 + s * 13 - 6.5} width="12" height="13" rx="3" fill={k === cur ? C_HIT : 'var(--panel)'} />
+            <text x={40 + k * step} y={14 + s * 13 + 4} textAnchor="middle" fontSize="11" fontWeight="700" fill={k === cur ? '#10220f' : 'var(--text)'}>{f}</text>
           </g>
         )),
       )}
