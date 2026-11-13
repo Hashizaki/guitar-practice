@@ -17,6 +17,11 @@ let lastAct = 0;
 const subs = new Set<() => void>();
 /** 「曲に合わせて弾く」の再生 id。再生中はコード練習の時間として数える */
 export const PLAY_ALONG_ID = 'play-along';
+/** 1分間コードチェンジの最中かどうか（その間もコード練習の時間として数える） */
+let chordActive = false;
+export const setChordActive = (on: boolean): void => {
+  chordActive = on;
+};
 
 function today(): DayLog {
   const k = dayKey();
@@ -42,11 +47,11 @@ export const Log = {
   tick(): void {
     if (document.visibilityState !== 'visible') return;
     const m = Metro.get();
-    const busy = m.running || micInUse() || Seq.active() !== null;
+    const busy = m.running || micInUse() || Seq.active() !== null || chordActive;
     if (!busy && Date.now() - lastAct > 60000) return;
     const t = today();
     t.sec += 5;
-    if ((m.running && m.mode === 'chord') || Seq.active() === PLAY_ALONG_ID) t.chord = (t.chord ?? 0) + 5;
+    if ((m.running && m.mode === 'chord') || Seq.active() === PLAY_ALONG_ID || chordActive) t.chord = (t.chord ?? 0) + 5;
     save();
   },
   /** 1分以上練習した日が何日続いているか（今日がまだなら昨日から数える） */

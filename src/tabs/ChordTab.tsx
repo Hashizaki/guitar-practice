@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChordDiagram } from '../components/ChordDiagram';
 import { Check, Dots, Select } from '../components/common';
-import { clickSound, strum } from '../lib/audio';
-import { PLAY_ALONG_ID } from '../lib/log';
+import { ac, clickSound, strum } from '../lib/audio';
+import { PLAY_ALONG_ID, setChordActive } from '../lib/log';
 import { Metro, useMetro } from '../lib/metronome';
 import { analyzeChroma, ensureMic, MIC_FAIL, releaseMic } from '../lib/mic';
 import { playChord, playShape } from '../lib/play';
 import { Seq, useSeqActive } from '../lib/seq';
+import { bestCapoFor, findShape, MAX_BARS, pairKey, parseSongText, transposeChord, type Song } from '../lib/songs';
 import { useShared } from '../lib/store';
+import { keepAwake } from '../lib/wake';
 import {
-  bestCapo, CHORD_NAMES, chordFrets, chordNotes, chordPcs, hasChord, KEYS, NOTE, pick, progChords, PROGS,
+  bestCapo, CHORD_NAMES, chordFrets, chordNotes, chordPcs, isBarre, KEYS, NOTE, pick, progChords, PROGS,
   shapeKey, sharp, strokeMark, STRUM_PATS, type KeyChord,
 } from '../lib/theory';
 
@@ -98,38 +100,184 @@ function ChangePractice({ cur, nxt, setPair, badge }: { cur: string; nxt: string
   );
 }
 
-// ---------- 曲に合わせて弾く（カポ対応） ----------
+// ---------- 1分間コードチェンジ ----------
+const ONE_MIN = 60;
+function OneMinuteChanges() {
+  const [a, setA] = useShared('omA', 'C');
+  const [b, setB] = useShared('omB', 'G');
+  const [best, setBest] = useShared<Record<string, number>>('omBest', {});
+  const [phase, setPhase] = useState<'idle' | 'count' | 'run' | 'done'>('idle');
+  const [left, setLeft] = useState(ONE_MIN);
+  const [count, setCount] = useState(0);
+  const [isRecord, setIsRecord] = useState(false);
+  const timer = useRef<ReturnType<typeof setInterval>>(undefined);
+  const live = useRef({ count, best, a, b });
+  live.current = { count, best, a, b };
+  const key = pairKey(a, b);
+  const opts = CHORD_NAMES.map((n) => [n, n] as const);
+
+  const stop = (): void => {
+    clearInterval(timer.current);
+    setChordActive(false);
+    keepAwake('onemin', false);
+  };
+  useEffect(() => stop, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const finish = (): void => {
+    stop();
+    const c = live.current;
+    const k = pairKey(c.a, c.b);
+    const rec = c.count > (c.best[k] ?? 0);
+    if (rec) setBest({ ...c.best, [k]: c.count });
+    setIsRecord(rec);
+    setPhase('done');
+    clickSound(ac().currentTime + 0.01, true);
+  };
+  const start = (): void => {
+    if (phase === 'count' || phase === 'run') {
+      stop();
+      setPhase('idle');
+      return;
+    }
+    if (Metro.get().running) Metro.stop();
+    if (Seq.active()) Seq.stop();
+    setCount(0);
+    setIsRecord(false);
+    setLeft(3);
+    setPhase('count');
+    setChordActive(true);
+    keepAwake('onemin', true);
+    const t0 = Date.now();
+    let lastSec = -1;
+    clearInterval(timer.current);
+    timer.current = setInterval(() => {
+      const el = (Date.now() - t0) / 1000;
+      if (el < 3) {
+        // 3秒のカウントダウン（1秒ごとにクリック）
+        const s = Math.floor(el);
+        if (s !== lastSec) {
+          lastSec = s;
+          clickSound(ac().currentTime + 0.01, false);
+        }
+        setLeft(3 - s);
+      } else if (el < 3 + ONE_MIN) {
+        if (lastSec < 3) {
+          lastSec = 3;
+          clickSound(ac().currentTime + 0.01, true);
+          setPhase('run');
+        }
+        setLeft(Math.ceil(3 + ONE_MIN - el));
+      } else finish();
+    }, 100);
+  };
+  const tap = (): void => {
+    if (phase === 'run') setCount((c) => c + 1);
+  };
+  const running = phase === 'count' || phase === 'run';
+  return (
+    <div className="card" id="one-minute">
+      <h2>⏱ 1分間コードチェンジ</h2>
+      <p className="muted" style={{ margin: '0 0 10px' }}>
+        2つのコードを1分間に何回切り替えられるか数えます。コードを替えて鳴らすたびに、下のボタンをタップ。苦手な切り替えを集中的に練習できます。
+      </p>
+      <div className="row" style={{ justifyContent: 'center' }}>
+        <Select value={a} onChange={setA} options={opts} testId="om-a" />
+        <span className="muted">⇄</span>
+        <Select value={b} onChange={setB} options={opts} testId="om-b" />
+      </div>
+      <div className="practice">
+        <div className="cur"><ChordDiagram name={a} w={96} /></div>
+        <div className="cur"><ChordDiagram name={b} w={96} /></div>
+      </div>
+      <div className="omstat">
+        <div><b data-testid="om-left">{phase === 'idle' ? ONE_MIN : left}</b><span>{phase === 'count' ? 'スタートまで' : '残り秒'}</span></div>
+        <div><b data-testid="om-count">{count}</b><span>回</span></div>
+        <div><b data-testid="om-best">{best[key] ?? '—'}</b><span>自己ベスト</span></div>
+      </div>
+      <div className={`tapzone${phase === 'run' ? ' ok' : ''}`} onPointerDown={(e) => { e.preventDefault(); tap(); }} data-testid="om-tap">
+        <span data-testid="om-label">
+          {phase === 'idle' && 'スタートを押して、切り替えるたびにここをタップ'}
+          {phase === 'count' && `${left}…`}
+          {phase === 'run' && '切り替えたらタップ！'}
+          {phase === 'done' && (isRecord ? `🎉 ${count}回！ 自己ベスト更新` : `${count}回でした（ベスト ${best[key] ?? count}回）`)}
+        </span>
+      </div>
+      <button className={`primary bigbtn${running ? ' on' : ''}`} style={{ marginTop: 10 }} onClick={start} data-testid="om-btn">
+        {running ? '■ やめる' : phase === 'done' ? '▶ もう一度' : '▶ スタート'}
+      </button>
+    </div>
+  );
+}
+
+// ---------- 曲に合わせて弾く（カポ対応・自分の曲の登録） ----------
+const NEW_SONG = '__new';
+interface Draft { id: string | null; name: string; text: string }
+
 function PlayAlong() {
   const m = useMetro();
   const playing = useSeqActive() === PLAY_ALONG_ID;
   const [key, setKey] = useShared('paKey', 'G');
   const [capo, setCapo] = useShared('paCapo', 0);
-  const [progI, setProgI] = useShared('paProg', 0);
+  /** 選んでいる進行：'p0'〜 は定番、's<id>' は自分の曲 */
+  const [src, setSrc] = useShared('paSrc', 'p0');
+  const [songs, setSongs] = useShared<Song[]>('songs', []);
   const [patI, setPatI] = useShared('paPat', 3);
   const [guide, setGuide] = useShared('paGuide', true);
   const [click, setClick] = useShared('paClick', true);
   const [pos, setPos] = useState<{ bar: number; slot: number }>({ bar: -1, slot: -1 });
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [err, setErr] = useState('');
   const opt = useRef({ guide, click });
   opt.current = { guide, click };
 
-  const prog = PROGS[progI];
-  const sKey = shapeKey(key, capo);
-  const shapes = progChords(sKey, prog);
-  const reals = progChords(key, prog);
+  const song = src.startsWith('s') ? songs.find((x) => 's' + x.id === src) : undefined;
+  const prog = song ? null : (PROGS[Number(src.slice(1))] ?? PROGS[0]);
+  // reals: 実際に鳴るコード。shapes: カポをつけたときに押さえるフォーム
+  const reals: KeyChord[] = prog ? progChords(key, prog) : parseSongText((song as Song).chords.join(' ')).chords;
+  const shapes: KeyChord[] = prog ? progChords(shapeKey(key, capo), prog) : reals.map((c) => transposeChord(c, -capo));
+  const forms = shapes.map(findShape);
   const pat = STRUM_PATS[patI][1];
   const n = shapes.length;
   const countIn = playing && pos.bar < 0;
   const i = pos.bar < 0 ? 0 : pos.bar % n;
-  const names = [...new Set(shapes.map((c) => c.name))];
-  const missing = names.filter((x) => !hasChord(x)).length;
+  const missing = new Set(shapes.filter((_, k) => !forms[k]).map((c) => c.name)).size;
 
+  const halt = (): void => {
+    if (Seq.active() === PLAY_ALONG_ID) Seq.stop();
+  };
   // 設定を変えたら再生を止める
   const change = <T,>(set: (v: T) => void) => (v: T): void => {
-    if (Seq.active() === PLAY_ALONG_ID) Seq.stop();
+    halt();
     set(v);
   };
+  const pickSrc = (v: string): void => {
+    halt();
+    if (v === NEW_SONG) {
+      setErr('');
+      setDraft({ id: null, name: '', text: '' });
+    } else setSrc(v);
+  };
+  const save = (): void => {
+    if (!draft) return;
+    const { chords, bad } = parseSongText(draft.text);
+    if (bad.length) return setErr(`読み取れないコードがあります：${bad.join('、')}（使えるのは C、Am、G7、Fmaj7、Dm7、Bdim など）`);
+    if (!chords.length) return setErr('コードを1つ以上入れてください（例：G D Em C）。');
+    if (chords.length > MAX_BARS) return setErr(`コードは ${MAX_BARS} 個までです（いま ${chords.length} 個）。`);
+    const id = draft.id ?? Date.now().toString(36);
+    const item: Song = { id, name: draft.name.trim() || `自分の曲 ${songs.length + 1}`, chords: chords.map((c) => c.name) };
+    setSongs(draft.id ? songs.map((x) => (x.id === id ? item : x)) : [...songs, item]);
+    setSrc('s' + id);
+    setCapo(0);
+    setDraft(null);
+  };
+  const remove = (): void => {
+    if (!song || !confirm(`「${song.name}」を削除します。よろしいですか？`)) return;
+    halt();
+    setSongs(songs.filter((x) => x.id !== song.id));
+    setSrc('p0');
+  };
   const sound = (k: number, t: number, up: boolean): void => {
-    if (hasChord(shapes[k].name)) playShape(shapes[k].name, capo, t, up);
+    const form = forms[k];
+    if (form) playShape(form, capo, t, up);
     else playChord(reals[k].root, reals[k].ty, t, up);
   };
   const start = (): void => {
@@ -160,34 +308,70 @@ function PlayAlong() {
       onStop: () => setPos({ bar: -1, slot: -1 }),
     });
   };
-  const Dia = ({ c, w }: { c: KeyChord; w: number }) =>
-    hasChord(c.name) ? (
-      <ChordDiagram name={c.name} w={w} />
+  const dia = (k: number, w: number) => {
+    const form = forms[k];
+    return form ? (
+      <ChordDiagram name={form} w={w} />
     ) : (
       <div className="nodia" style={{ width: w }}>
         フォーム未収録
         <br />
-        {chordNotes(c.root, c.ty).join('・')}
+        {chordNotes(shapes[k].root, shapes[k].ty).join('・')}
       </div>
     );
+  };
+  const srcOptions: (readonly [string, string])[] = [
+    ...PROGS.map((p, k) => ['p' + k, p.name] as const),
+    ...songs.map((x) => ['s' + x.id, `🎵 ${x.name}`] as const),
+    [NEW_SONG, '＋ 自分の曲を追加…'],
+  ];
   return (
     <div className="card" id="play-along">
       <h2>🎵 曲に合わせて弾く</h2>
       <p className="muted" style={{ margin: '0 0 10px' }}>
-        コード進行とストロークを選ぶと、伴奏がループします。画面のコードと矢印に合わせて弾きましょう。ギターがなくても、腕を振りながら聞くだけで練習になります。
+        コード進行とストロークを選ぶと、伴奏がループします。画面のコードと矢印に合わせて弾きましょう。練習したい曲のコード進行を自分で登録することもできます。
       </p>
       <div className="row">
-        <label className="muted">
-          キー <Select value={key} onChange={change(setKey)} options={KEYS.map((k) => [k, k] as const)} testId="pa-key" />
-        </label>
+        {prog && (
+          <label className="muted">
+            キー <Select value={key} onChange={change(setKey)} options={KEYS.map((k) => [k, k] as const)} testId="pa-key" />
+          </label>
+        )}
         <label className="muted">
           カポ <Select value={capo} onChange={change(setCapo)} options={[0, 1, 2, 3, 4, 5, 6, 7].map((c) => [c, c ? String(c) : 'なし'] as const)} testId="pa-capo" />
         </label>
-        <button onClick={() => change(setCapo)(bestCapo(key, prog))} data-testid="pa-auto">おすすめカポ</button>
+        <button onClick={() => change(setCapo)(prog ? bestCapo(key, prog) : bestCapoFor(reals, isBarre))} data-testid="pa-auto">おすすめカポ</button>
       </div>
       <div className="row" style={{ marginTop: 8 }}>
-        <Select className="grow" value={progI} onChange={change(setProgI)} options={PROGS.map((p, k) => [k, p.name] as const)} />
+        <Select className="grow" value={song || prog ? src : 'p0'} onChange={pickSrc} options={srcOptions} testId="pa-src" />
+        {song && (
+          <>
+            <button onClick={() => { halt(); setErr(''); setDraft({ id: song.id, name: song.name, text: song.chords.join(' ') }); }} data-testid="pa-edit">編集</button>
+            <button className="danger" onClick={remove} data-testid="pa-delete">削除</button>
+          </>
+        )}
       </div>
+      {draft && (
+        <div className="songedit" data-testid="pa-editor">
+          <input type="text" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="曲の名前" maxLength={40} data-testid="pa-song-name" />
+          <textarea
+            value={draft.text}
+            onChange={(e) => setDraft({ ...draft, text: e.target.value })}
+            placeholder={'コードを1小節に1つずつ、空白で区切って入力\n例：G D Em C'}
+            rows={3}
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            data-testid="pa-song-text"
+          />
+          {err && <p className="songerr" data-testid="pa-song-err">{err}</p>}
+          <div className="row">
+            <button className="primary" onClick={save} data-testid="pa-song-save">保存</button>
+            <button onClick={() => setDraft(null)}>やめる</button>
+            <span className="muted">♯は #、♭は b で入力できます（例：F#m、Bb）</span>
+          </div>
+        </div>
+      )}
       <div className="row" style={{ marginTop: 8 }}>
         <Select
           className="grow"
@@ -198,30 +382,34 @@ function PlayAlong() {
       </div>
       <div className="painfo muted" data-testid="pa-info">
         {capo ? (
-          <>
-            カポ {capo}：<b>キー {sKey} のフォーム</b>で弾くと、実際の音はキー {key} になります。
-          </>
-        ) : (
+          prog ? (
+            <>カポ {capo}：<b>キー {shapeKey(key, capo)} のフォーム</b>で弾くと、実際の音はキー {key} になります。</>
+          ) : (
+            <>カポ {capo}：下のフォームで弾くと、登録したコードの音になります。</>
+          )
+        ) : prog ? (
           `キー ${key}（カポなし）`
+        ) : (
+          `${(song as Song).name}（${n}小節・カポなし）`
         )}
         {missing > 0 && ` フォーム未収録のコードが ${missing} 個あります。「おすすめカポ」を試してみてください。`}
       </div>
       <div className="practice">
         <div className="cur">
           <div className="nm" data-testid="pa-cur">{countIn ? `カウント ${Math.floor(Math.max(pos.slot, 0) / 2) + 1}` : shapes[i].name}</div>
-          <Dia c={shapes[i]} w={120} />
+          {dia(i, 120)}
         </div>
         <div className="nxt">
           <div className="muted">次</div>
           <div className="nm">{shapes[(i + 1) % n].name}</div>
-          <Dia c={shapes[(i + 1) % n]} w={64} />
+          {dia((i + 1) % n, 64)}
         </div>
       </div>
       <div className="progrow" data-testid="pa-row">
         {shapes.map((c, k) => (
           <div key={k} className={pos.bar >= 0 && k === i ? 'cur' : ''}>
             <small>
-              {c.roman}
+              {prog ? c.roman : k + 1}
               {capo ? ' ＝ ' + reals[k].name : ''}
             </small>
             <b>{c.name}</b>
@@ -381,6 +569,7 @@ export function ChordTab() {
   return (
     <>
       <ChangePractice cur={pair[0]} nxt={pair[1]} setPair={setPair} badge={badge} />
+      <OneMinuteChanges />
       <PlayAlong />
       <ChordJudge cur={pair[0]} onBadge={setBadge} />
       <ChordChart />

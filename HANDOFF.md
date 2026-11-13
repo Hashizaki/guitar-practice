@@ -22,7 +22,8 @@ recorded audio. Built with **Vite + React + TypeScript**, tested and deployed to
 | | Tempo-up practice | Adds +2/+5/+10 BPM every 2/4/8 bars |
 | Tuner | Reference tones, mic tuner | Note name, Hz, cents |
 | Chords | Chord-change practice | Random changes every 2/4/8 beats in time with the metronome |
-| | Play along | Key, progression and strumming pattern; looping backing with count-in; capo support with a "recommended capo" button |
+| | One-minute changes | Count how many times you can switch between two chords in 60 s; best score per chord pair |
+| | Play along | Key, progression and strumming pattern; looping backing with count-in; capo support with a "recommended capo" button; **your own songs** (type the chords, one per bar) |
 | | Chord check (optional) | Compares mic input with the notes of the target chord |
 | | Chord chart | 23 chords, tap to hear |
 | Fretboard | Note-name quiz / find-the-note mode / play-the-note mode | Play mode listens through the mic and accepts the asked note at the right pitch |
@@ -48,6 +49,7 @@ src/
     mic.ts              Shared mic stream, chroma analysis
     pitch.ts            Pitch detection (autocorrelation), stable-note detector (pure, unit-tested)
     rhythm.ts           Tap-to-grid offset maths (pure, unit-tested)
+    songs.ts            User songs: chord-name parsing, transposition, shape lookup, capo choice (unit-tested)
     stats.ts            Per-item quiz results, weighted question choice, weak-spot list (unit-tested)
     backup.ts           Backup export / import / erase over a Storage-like object (pure, unit-tested)
     log.ts              Practice log + useLogVersion() hook
@@ -112,6 +114,15 @@ tests/                  Playwright end-to-end tests (iPhone 13 and iPad Pro 11 v
 - Chord check: 12-bin chroma from FFT peaks (75–1500 Hz, ±35 cents), smoothed 0.55/0.45. A chord tone below
   0.22 is "missing"; a non-chord tone above 0.6 is "extra". **These thresholds have not been tuned on a real guitar.**
 
+### Play along and user songs
+- The selected source is the shared `paSrc`: `p<index>` for a preset in `PROGS`, `s<id>` for a user song in the
+  shared `songs` list (`{id, name, chords: string[]}`, one chord per bar, max 32).
+- `parseSongText()` accepts `C`, `Am`, `G7`, `Fmaj7`/`FM7`, `Dm7`, `Bdim`, with `#`/`b` for accidentals and
+  spaces, `|`, commas, arrows or newlines as separators; unreadable tokens are reported and block saving.
+- User songs are absolute chords, so the key selector is hidden; a capo transposes them down
+  (`transposeChord(c, -capo)`). `findShape()` looks fingerings up by pitch class + quality, so `Gbm` finds `F♯m`.
+- One-minute changes keeps its best scores in the shared `omBest` map keyed by `pairKey(a, b)` (order-independent).
+
 ### Weak spots
 - `Stats.record(group, item, ok)` keeps `[right, wrong]` per item with a 0.9 decay per answer, so recent results
   count more (stored as `gtr_stats`). Groups: `fretS` (string), `fretN` (note), `iv`, `ce`, `fm`.
@@ -163,6 +174,5 @@ One-time setup: repository **Settings → Pages → Source: GitHub Actions**.
 
 ## 8. Ideas for future work
 
-- One-minute chord-change counter, user-defined songs for play-along
 - Latency calibration for rhythm tapping, metronome subdivisions
 - Fingerpicking pattern practice

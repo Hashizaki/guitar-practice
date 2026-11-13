@@ -207,7 +207,11 @@ function CapoBody() {
   const real = keyByPc(parseNote(minor ? shape.slice(0, -1) : shape).pc + capo) + (minor ? 'm' : '');
   const toPlayAlong = (): void => {
     setShared('paKey', key);
-    setShared('paCapo', bestCapo(key, PROGS[getShared('paProg', 0)]));
+    // 自分の曲を選んでいた場合は、定番の進行に戻してからキーを反映する
+    const cur = getShared('paSrc', 'p0');
+    const src = cur.startsWith('p') ? cur : 'p0';
+    setShared('paSrc', src);
+    setShared('paCapo', bestCapo(key, PROGS[Number(src.slice(1))] ?? PROGS[0]));
     gotoTab('chord');
     scrollToId('play-along');
   };
