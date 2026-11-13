@@ -1,10 +1,10 @@
 name: CI
 
-# プルリクエストと main 以外への push で、型チェック・単体テスト・ビルド・画面テストを行う
+# プルリクエストごとに、型チェック・単体テスト・ビルド・画面テストを行う
+# （main に入ったときのテストは deploy.yml が行う）
 on:
   pull_request:
-  push:
-    branches-ignore: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
