@@ -1,17 +1,13 @@
 # Guitar Practice App: Handoff Notes
 
-Last updated: 2026-11-12
-
 ## 1. Overview
 
-A guitar practice web app that runs from a single HTML file.
-It needs no build step, server, or external audio files. Opening it in a browser is all it takes.
+A guitar practice web app for music beginners. Everything runs in the browser: there is no server and no
+recorded audio. Built with **Vite + React + TypeScript**, tested and deployed to GitHub Pages by GitHub Actions.
 
-- File: `index.html` (formerly `guitar-practice.html`)
-- Supporting files for "Add to Home Screen" / offline use: `manifest.webmanifest`, `sw.js`, `icons/`
-  (`index.html` still works on its own; these are optional extras)
 - Target devices: iPhone / iPad (Safari) first, also Android and PC. iPad and landscape screens get a two-column layout
 - UI language: Japanese
+- Installable ("Add to Home Screen") and works offline via a small service worker
 
 ## 2. Feature list
 
@@ -19,169 +15,133 @@ It needs no build step, server, or external audio files. Opening it in a browser
 |---|---|---|
 | Learn (home) | Practice log | Today's minutes vs. a daily goal, streak, 5-week calendar, total time. Stored only on the device |
 | | Today's menu | 5 small daily tasks (lesson, fretboard quiz ×10, ear training ×10, rhythm ×30 taps, chord changes 2 min) with automatic progress |
-| Learn (theory lessons) | 14 step-by-step lessons | Note names → fretboard → rhythm/strumming → reading tab → major scale → intervals → chord construction → diatonic chords → chord progressions → minor keys/relative keys → pentatonic improvisation → power chords → barre chords (movable E/A shapes) → capo and transposition. Each has interactive sound demos and a quiz (3 correct answers completes it); progress is saved |
+| Learn (lessons) | 14 step-by-step lessons | Note names → fretboard → rhythm/strumming → reading tab → major scale → intervals → chord construction → diatonic chords → chord progressions → minor/relative keys → pentatonic improvisation → power chords → barre chords → capo and transposition. Each has interactive sound demos and a quiz (3 correct answers completes it) |
 | | Glossary | 32 beginner terms with search |
-| Metronome | BPM 30–240, ±1/±5 buttons, slider | |
-| | Time signature (2/3/4/6), accent on beat 1 | |
-| | Tap tempo | Averages the last 4 taps, resets after a 2.5 s gap |
+| Metronome | BPM 30–240, time signature, accent, tap tempo | |
 | | Tempo-up practice | Adds +2/+5/+10 BPM every 2/4/8 bars |
-| Tuner | Reference tones | Tap a string for its open-string pitch, with an optional repeat |
-| | Mic tuner | Shows the note name, Hz, and how many cents off it is |
-| Chords | Chord chart | 23 chords with diagrams, tap to hear them |
-| | Play along | Pick key, progression and strumming pattern; the backing loops with a one-bar count-in while the current/next chord and stroke arrows are highlighted. Capo support: shows the shapes to finger and sounds the real key; "recommended capo" picks the position with the easiest shapes |
-| | Chord-change practice | Pick chords and they switch every 2/4/8 beats in time with the metronome; shows a preview of the next chord and can play each chord automatically |
-| | **Chord check (optional)** | Turned on with a switch. Analyzes the mic input and compares it with the notes the chord should contain |
-| Fretboard | Note-name quiz | Range of frets 0–5 or 0–12, ♯/♭ on or off; tracks score, streak, and best streak |
-| | Find-the-note mode | "Tap C on the 3rd string": answer by tapping the fretboard |
-| | Scale / virtual fretboard | Minor/major pentatonic, blues, major, natural minor, chord tones; note names or degrees; tap to play; scale playback lights up positions |
-| Training (no guitar needed) | Interval ear training | 5 / 8 / 12 intervals, ascending / descending / harmonic |
-| | Chord-quality ear training | Major/minor → +7, maj7, m7 → +sus4, dim; strum or arpeggio |
-| | Rhythm tapping | Tap with the click; shows offset in ms, average, spread, % within ±30 ms; quarter / 8th / triplet grid; optional "2 bars on, 2 bars silent" |
-| | Chord-form quiz | See a diagram, pick the name (confusable chords are preferred as distractors) |
+| Tuner | Reference tones, mic tuner | Note name, Hz, cents |
+| Chords | Chord-change practice | Random changes every 2/4/8 beats in time with the metronome |
+| | Play along | Key, progression and strumming pattern; looping backing with count-in; capo support with a "recommended capo" button |
+| | Chord check (optional) | Compares mic input with the notes of the target chord |
+| | Chord chart | 23 chords, tap to hear |
+| Fretboard | Note-name quiz / find-the-note mode | |
+| | Scale / virtual fretboard | Tap to play; scale playback lights up positions |
+| Training (no guitar) | Interval ear training, chord-quality ear training, rhythm tapping, chord-form quiz | |
 
-## 3. Technical design
+## 3. Project layout
+
+```
+index.html              Vite entry (meta tags for iOS / PWA)
+public/                 manifest.webmanifest, sw.js, icons/ (copied as-is)
+src/
+  main.tsx              Mounts <App>, registers the service worker (production only)
+  App.tsx               Header, the six tabs (all stay mounted; only visibility changes), bottom nav
+  styles.css            All styles (plain CSS, class names shared across components)
+  lib/                  No UI. Singletons and pure functions
+    theory.ts           Music theory data and maths (pure, unit-tested): note spelling, scales, chords,
+                        diatonic chords, progressions, strum patterns, chord fingerings, capo
+    audio.ts            AudioContext, iOS unlock / audio session, Karplus-Strong pluck, strum, click
+    play.ts             Play a theoretical chord (guitar fingering if we have one, stacked tones otherwise)
+    metronome.ts        The metronome engine (look-ahead scheduler) + useMetro() hook
+    seq.ts              One-at-a-time sequencer for demos and backing loops + useSeqActive() hook
+    mic.ts              Shared mic stream, pitch detection (autocorrelation), chroma analysis
+    rhythm.ts           Tap-to-grid offset maths (pure, unit-tested)
+    log.ts              Practice log + useLogVersion() hook
+    store.ts            localStorage wrapper, useShared() (persisted state shared between components)
+    nav.ts              gotoTab(), gotoTrain(), scrollToId()
+    wake.ts             Screen wake lock
+  components/           Fretboard, Keyboard, ChordDiagram, and small shared widgets (common.tsx)
+  tabs/                 One file per tab
+  lessons/              basics.tsx, theory.tsx, guitar.tsx (lesson bodies + quizzes), glossary.ts, index.ts (order)
+tests/                  Playwright end-to-end tests (iPhone 13 and iPad Pro 11 viewports)
+.github/workflows/      ci.yml (PRs and branches), deploy.yml (main → GitHub Pages)
+```
+
+## 4. Design notes
+
+### State
+- Engines that must keep running across tab switches (metronome, sequencer, mic, log) are module-level
+  singletons in `src/lib`; React reads them through `useSyncExternalStore` hooks.
+- `useShared(key, default)` is a persisted `useState` whose value is shared by every component using the same
+  key. It is how one feature configures another (e.g. a lesson sets `svKey`/`svScale` and switches to the
+  fretboard tab, or sets `selChords` for chord-change practice). Keys are stored as `gtr_<key>`.
+- All six tabs stay mounted and are shown/hidden with CSS, so quiz scores and running practice survive tab
+  switches. `React.StrictMode` is intentionally not used (double effects fight with mic / audio cleanup).
 
 ### Audio
-- **Web Audio API** only. All sound is generated by the program; there are no recorded samples.
-- **Guitar sound**: made with the Karplus-Strong algorithm (`pluckBuffer()`). Buffers are cached per frequency.
-- **Metronome clicks**: an oscillator with a short envelope (`clickSound()`).
-- **Scheduling**: a look-ahead scheduler (`scheduler()`, runs every 25 ms and schedules 120 ms ahead).
-  - Screen updates are synced with `setTimeout` and sent to everything registered in `M.listeners`.
-  - Chord-change practice also registers itself in `M.listeners`, so it shares the metronome.
+- Web Audio only. Guitar tone: Karplus-Strong (`pluck`), cached per frequency. `strum(frets, t, up, vol)`.
+- Scheduling: `Metro` schedules clicks 120 ms ahead every 25 ms and notifies `Metro.onBeat` listeners in sync.
+  It skips ahead if it fell behind (returning from background) so clicks do not burst.
+- `Seq.play(id, {n, len, fn, ui, loop, onStop})` schedules steps on the audio clock; calling it again with the
+  same id stops it. `gotoTab()` stops it too.
 
 ### iPhone / iPad
-- `ac()` creates the AudioContext lazily and resumes it from any non-running state (iOS also uses `interrupted`).
-- `unlockAudio()` plays a silent buffer in the first `touchend`/`pointerup`, which iOS requires.
-- `navigator.audioSession.type` (iOS 16.4+): `playback` normally (sound plays even with the silent switch on),
-  `play-and-record` while the mic is in use.
-- `scheduler()` skips ahead if `M.next` fell behind (e.g. after returning from background) so clicks are not fired in a burst.
-- Wake Lock (`keepAwake(who, on)`) keeps the screen on while the metronome or mic is running.
-- CSS: safe-area insets, 16px selects (prevents iOS focus zoom), `touch-action: manipulation`,
-  `[hidden]{display:none!important}` (needed because many elements set `display`).
-- PWA: `manifest.webmanifest` + `sw.js` (network-first for the page, cache-first for everything else).
-  The service worker registers only on https/localhost. Bump `VERSION` in `sw.js` when releasing.
-- iOS users who are not in standalone mode see a one-time "Add to Home Screen" hint.
+- AudioContext is created lazily, resumed from any non-running state (iOS also uses `interrupted`) and unlocked
+  with a silent buffer on the first touch.
+- `navigator.audioSession.type` (iOS 16.4+): `playback` normally (sounds even with the silent switch on),
+  `play-and-record` while the mic is on.
+- Wake lock while the metronome, mic or a demo is running.
+- CSS: safe-area insets, 16px selects (no focus zoom), `touch-action: manipulation`, `[hidden]{display:none!important}`.
 
-### Mic (shared)
-- `ensureMic(user)` / `releaseMic(user)`: the tuner and the chord check share one mic stream.
-  The stream stops once no feature is using it.
-- `AnalyserNode` with fftSize 8192.
+### Theory
+- `spell(root, semitones, letterStep)` spells notes correctly per key (B♭ in F major, never A♯).
+  `scaleNotes`, `chordNotes`, `diatonic(key)`, `progChords(key, prog)` build on it.
+- `shapeKey(realKey, capo)` and `bestCapo(realKey, prog)` implement the capo logic: diagrams show the shapes to
+  finger while playback raises every string by the capo.
 
-### Pitch detection (tuner)
-- `detectPitch()`: autocorrelation. Covers 65–1000 Hz.
-- Takes the first peak that reaches at least 85% of the strongest one (to avoid octave errors), then refines it with parabolic interpolation.
-- Runs about every 90 ms on the first 3072 samples.
-
-### Chord check
-- `analyzeChroma()`: builds a 12-note chroma profile from the FFT spectrum.
-  - Range 75–1500 Hz, counts only local peaks, ignores anything more than ±35 cents from a note.
-  - Applies exponential smoothing (0.55 / 0.45).
-- `judgeLoop()`: judges every 80 ms.
-  - Starts judging when the input level (RMS) is above 0.012.
-  - **Missing note**: a chord note with chroma < 0.22.
-  - **Extra note**: a non-chord note with chroma > 0.6.
-  - The result is shown for 1.5 s.
-- The notes each chord should contain are worked out automatically from the fingering in the diagram (`chordPcs()`).
-- In follow mode, the result is reset whenever the chord changes (`judgeReset()`).
-
-### Training tab
-- `makeQuiz(o)`: shared quiz engine (score, streak, best streak saved as `gtr_best_<key>`).
-  `o` provides `choices()`, `make(prev)`, `prompt`, `play(q)`, `explain(q)`, `after(q)`, `delay`.
-- Rhythm: `scheduler()` records scheduled beat times in `M.times` and skips clicks where `M.mute(n)` is true.
-  `tapAudioTime(e)` maps the pointer event's `timeStamp` to audio time with `getOutputTimestamp()`
-  (falls back to `currentTime - outputLatency`), then `rhythmTap()` finds the nearest grid point.
-- Fretboard: `boardSVG(marks)` draws any fretboard with markers, `boardHit(svg, e)` turns a tap into `{s, f}`.
-
-### Learn tab (theory lessons)
-- Theory helpers: `spell(root, semitones, letterStep)` spells notes correctly per key (B♭ in F major, never A♯),
-  `scaleNotes()`, `chordNotes()`, `diatonic(key)` (7 chords with roman numerals and T/S/D function).
-- `LESSONS`: array of `{id, title, sub, body (HTML), init(el), quiz()}`. `body` marks widgets with `data-w`;
-  `init` wires them up. `quiz()` returns questions built by `mkQ(question, correct, wrongs, why)`.
-  To add a lesson, append an object; the list, progress bar and quiz flow pick it up automatically.
-- `Seq.play(btn, steps, stepLen, fn(i, t), ui(i), loop)`: one-at-a-time sequencer for demos (scales, strumming
-  patterns, progression loops). Audio is scheduled on the audio clock; `gotoTab()` and leaving a lesson stop it.
-- `kbDraw(el, marks)` / `kbOnTap()`: two-octave SVG keyboard. `playChord(root, type, t, up)` uses the guitar
-  fingering from `CHORDS` when one exists, otherwise stacks the chord tones.
-- `strum(frets, t, up, vol)` now supports scheduled time and up-strokes.
-- Completed lesson ids are stored in `gtr_lessonsDone`; the last open tab in `gtr_tab` (first visit opens Learn).
+### Lessons
+- A lesson is `{id, title, sub, Body, quiz}` (`src/lessons/types.tsx`). `Body` is a React component with the
+  explanation and demos; `quiz()` returns questions built with `mkQ(question, correct, wrongs, why)`.
+- To add a lesson: write it in one of the lesson files and add it to the array exported there. The list,
+  progress bar, quiz flow and "today's menu" pick it up automatically. Completed ids live in `gtr_lessonsDone`.
 
 ### Practice log
-- `Log` (defined right after `Store`): `Log.data[YYYY-MM-DD] = {sec, lesson, fret, ear, rhythm, chord}`, saved as `gtr_log`
-  (last 400 days). `Log.tick()` runs every 5 s and adds time while the page is visible and either the user
-  interacted within the last minute or the metronome / mic / a lesson demo is running.
-- Features report activity with `Log.count(kind)`; `MENU` (in the learn section) turns the counters into
-  the daily checklist, and `renderHome()` draws the card, calendar and menu.
+- `Log.data()[YYYY-MM-DD] = {sec, lesson, fret, ear, rhythm, chord}`, saved as `gtr_log` (last 400 days).
+- `Log.tick()` runs every 5 s and adds time while the page is visible and either the user interacted within the
+  last minute or the metronome / mic / a demo is running. Features report activity with `Log.count(kind)`.
 
-### Play along / capo
-- `PROGS` and `STRUM_PATS` are shared by the lessons and the play-along card.
-- `paData()` derives the shape key from the real key and capo (`keyByPc(realPc - capo)`), so the diagrams show
-  what to finger while `paSound()` raises every string by the capo (`frets + capo`) to sound the real key.
-- The "recommended capo" button scores capo 0–7 by how many chords have a fingering in `CHORDS`, with a small
-  penalty for barre chords and higher capo positions.
-- `Seq` now holds a wake lock while playing; play-along time counts toward the daily "chord changes" task.
+### Mic features
+- Tuner: autocorrelation over 65–1000 Hz, first peak ≥ 85% of the strongest, parabolic interpolation.
+- Chord check: 12-bin chroma from FFT peaks (75–1500 Hz, ±35 cents), smoothed 0.55/0.45. A chord tone below
+  0.22 is "missing"; a non-chord tone above 0.6 is "extra". **These thresholds have not been tuned on a real guitar.**
 
-### Data
-- `CHORDS`: frets listed from the 6th string to the 1st, with -1 meaning muted. Barre chords are written as `{f:[...], barre:[fret, starting string index]}`.
-- `OPEN = [40,45,50,55,59,64]`: MIDI numbers of the open strings (6th string to 1st).
-- `localStorage` (via `Store.get/set`, keys prefixed `gtr_`, all wrapped in try/catch) stores the best streaks,
-  BPM, time signature, selected chords and most select/checkbox settings (`persist(id)`).
+### Offline
+- `public/sw.js`: network-first for the page, cache-first for everything else. Because Vite's asset names change
+  per build, the page sends the service worker the list of files it loaded so the first visit is cached too.
 
-## 4. Testing
+## 5. Testing
 
-- JavaScript syntax check (`node --check`): passed
-- Chord check with synthetic sounds generated by the program (not a real guitar):
-  - C played, judged against C → OK
-  - G or Am played, judged against C → wrong, with the missing and extra notes named correctly
-  - 2nd string left open on a C chord → B correctly reported as an extra note
-- iPhone 13 / iPad Pro 11 emulation in Playwright (Chromium): every tab and training mode, no console errors
-- Theory check: all 12 major keys, their relative minors, diatonic chords, chord tones and intervals printed and
-  verified for correct spelling; every lesson quiz generated 300 times with no duplicate/missing options;
-  all 14 lessons completed end-to-end in emulation with no errors
-- Rhythm timing math: taps injected at 0 / +40 / −25 ms and on an off-beat 8th were measured exactly
-- **Not yet tested**: mic input from a real guitar, and behavior on real devices (iOS Safari / Android Chrome).
-  On a real iPhone, check: sound with the silent switch on, the mic tuner, and whether rhythm offsets look biased
-  (Bluetooth earphones add a lot of latency, so wired earphones or the speaker are better for the rhythm mode)
+- `npm run typecheck` — TypeScript, strict.
+- `npm test` — Vitest unit tests for `theory.ts` (spelling in all 12 keys, chords, diatonic chords, progressions,
+  capo) and `rhythm.ts`.
+- `npm run e2e` — Playwright against the production build at iPhone 13 and iPad Pro 11 sizes: every tab, the
+  quizzes, play-along, the practice log, and all 14 lessons completed end to end with no console errors.
+  Elements used by tests carry `data-testid`; quiz elements expose the correct answer in `data-answer`.
+- CI runs all of the above on every pull request; `main` is deployed only if they pass.
+- **Not tested**: real devices (iOS Safari / Android Chrome) and mic input from a real guitar. On a real iPhone
+  check sound with the silent switch on, the mic tuner, and whether rhythm offsets look biased (Bluetooth
+  earphones add a lot of latency).
 
-## 5. Known limitations and caveats
+## 6. Deployment
 
-- **The mic does not work inside the claude.ai artifact view** because of browser security restrictions.
-  It works when the file is opened directly in a browser or served over HTTPS (for example GitHub Pages).
-- Chord check:
-  - It can tell which notes are sounding, but not which string or finger is the problem.
-  - Noise and overtones can affect it. Strings that are out of tune make errors more likely.
-  - The thresholds (0.22 / 0.6 / RMS 0.012) have not been tuned against a real guitar.
-- The low strings (around E2) are close to the FFT's frequency resolution limit, so their notes are judged mostly from overtones.
-- The guitar sound is synthesized, so it is simple compared with a real instrument.
+`.github/workflows/deploy.yml` builds, tests and publishes `dist/` to GitHub Pages on every push to `main`.
+One-time setup: repository **Settings → Pages → Source: GitHub Actions**.
+`vite.config.ts` uses `base: './'`, so the site works under `https://<user>.github.io/<repo>/` without changes.
 
-## 6. Publishing (GitHub Pages)
+## 7. Known limitations
 
-The app has no licensing issues (the sound is synthesized, the code is the user's own, and Google Fonts are under the OFL), so it can be published.
+- The mic needs https (or localhost) and permission; it does not work inside sandboxed previews.
+- The chord check tells which notes sound, not which string or finger is wrong, and is sensitive to noise and tuning.
+- The low E string is near the FFT resolution limit, so its notes are judged mostly from overtones.
+- The guitar tone is synthesized and simple compared with a real instrument.
+- Safari may clear site data for sites not added to the Home Screen after about a week without visits.
 
-1. Create a **public** repository on GitHub (required for Pages on the free plan).
-2. Upload `index.html`, `manifest.webmanifest`, `sw.js` and the `icons/` folder.
-3. In Settings → Pages, choose "Deploy from a branch" with `main` / `(root)`.
-4. It will be live at `https://<username>.github.io/<repository-name>/`.
-5. On iPhone / iPad, open it in Safari, then Share → "Add to Home Screen" for a full-screen app that works offline.
+## 8. Ideas for future work
 
-Mic audio is analyzed only in the browser and is never sent anywhere.
-
-## 7. Ideas for future work
-
-- Adjust the chord-check thresholds after testing with a real guitar
-- Scale display (pentatonic positions, etc.)
-- Practice log (a calendar of daily practice time)
-- Tab-reading practice mode
-- More realistic sound using recorded samples (CC0 from Freesound, etc.)
-- More lessons (the CAGED system, 7th-chord functions, secondary dominants, fingerpicking patterns)
-- Song-based practice (pick a progression and strumming pattern, play along)
-- Latency calibration for the rhythm mode (useful with Bluetooth earphones)
-- Rhythm patterns beyond a straight grid (e.g. syncopation reading)
-
-## 8. Resuming in a new Claude Code session
-
-Give Claude `guitar-practice.html` along with this document and ask something like:
-
-> "Read HANDOFF.md and guitar-practice.html, then add [the feature you want]."
-
-The code is a single file split into sections marked by `/* ---------- section name ---------- */` comments
-(shared audio / settings / wake lock / tabs / metronome / tuner / chords / chord check / fretboard / training / learn / PWA).
+- Backup / restore of the practice log and progress
+- Track weak spots in the quizzes and ask them more often
+- "Play the note" mode judged by the mic
+- One-minute chord-change counter, user-defined songs for play-along
+- Latency calibration for rhythm tapping, metronome subdivisions
+- Left-handed fretboard, light theme, text size
+- Fingerpicking pattern practice
