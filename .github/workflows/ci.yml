@@ -1,0 +1,36 @@
+name: CI
+
+# プルリクエストごとに、型チェック・単体テスト・ビルド・画面テストを行う
+# （main に入ったときのテストは deploy.yml が行う）
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 型チェック
+        run: npm run typecheck
+      - name: 単体テスト
+        run: npm test
+      - name: ビルド
+        run: npm run build
+      - name: ブラウザを用意
+        run: npx playwright install --with-deps chromium
+      - name: 画面テスト（iPhone / iPad サイズ）
+        run: npm run e2e
