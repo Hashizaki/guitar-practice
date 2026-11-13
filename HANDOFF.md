@@ -25,7 +25,7 @@ recorded audio. Built with **Vite + React + TypeScript**, tested and deployed to
 | | Play along | Key, progression and strumming pattern; looping backing with count-in; capo support with a "recommended capo" button |
 | | Chord check (optional) | Compares mic input with the notes of the target chord |
 | | Chord chart | 23 chords, tap to hear |
-| Fretboard | Note-name quiz / find-the-note mode | |
+| Fretboard | Note-name quiz / find-the-note mode / play-the-note mode | Play mode listens through the mic and accepts the asked note at the right pitch |
 | | Scale / virtual fretboard | Tap to play; scale playback lights up positions |
 | Training (no guitar) | Interval ear training, chord-quality ear training, rhythm tapping, chord-form quiz | |
 
@@ -45,7 +45,8 @@ src/
     play.ts             Play a theoretical chord (guitar fingering if we have one, stacked tones otherwise)
     metronome.ts        The metronome engine (look-ahead scheduler) + useMetro() hook
     seq.ts              One-at-a-time sequencer for demos and backing loops + useSeqActive() hook
-    mic.ts              Shared mic stream, pitch detection (autocorrelation), chroma analysis
+    mic.ts              Shared mic stream, chroma analysis
+    pitch.ts            Pitch detection (autocorrelation), stable-note detector (pure, unit-tested)
     rhythm.ts           Tap-to-grid offset maths (pure, unit-tested)
     stats.ts            Per-item quiz results, weighted question choice, weak-spot list (unit-tested)
     backup.ts           Backup export / import / erase over a Storage-like object (pure, unit-tested)
@@ -105,6 +106,9 @@ tests/                  Playwright end-to-end tests (iPhone 13 and iPad Pro 11 v
 
 ### Mic features
 - Tuner: autocorrelation over 65–1000 Hz, first peak ≥ 85% of the strongest, parabolic interpolation.
+- Play-the-note mode (fretboard quiz): every 90 ms the detected frequency is snapped to a note if within ±40 cents;
+  `createStableNote(3)` requires the same note for 3 frames before it counts. Correct when that pitch equals the
+  asked note on the asked string (the same pitch on another string is accepted, since they sound identical).
 - Chord check: 12-bin chroma from FFT peaks (75–1500 Hz, ±35 cents), smoothed 0.55/0.45. A chord tone below
   0.22 is "missing"; a non-chord tone above 0.6 is "extra". **These thresholds have not been tuned on a real guitar.**
 
@@ -136,8 +140,10 @@ tests/                  Playwright end-to-end tests (iPhone 13 and iPad Pro 11 v
 - `npm run e2e` — Playwright against the production build at iPhone 13 and iPad Pro 11 sizes: every tab, the
   quizzes, play-along, the practice log, and all 14 lessons completed end to end with no console errors.
   Elements used by tests carry `data-testid`; quiz elements expose the correct answer in `data-answer`.
+  `playwright.config.ts` generates a WAV with a 110 Hz tone (A2, open 5th string) and feeds it to Chromium's fake
+  microphone, so the tuner and play-the-note mode are exercised for real.
 - CI runs all of the above on every pull request; `main` is deployed only if they pass.
-- **Not tested**: real devices (iOS Safari / Android Chrome) and mic input from a real guitar. On a real iPhone
+- **Not tested**: real devices (iOS Safari / Android Chrome) and mic input from a real guitar (only synthetic tones). On a real iPhone
   check sound with the silent switch on, the mic tuner, and whether rhythm offsets look biased (Bluetooth
   earphones add a lot of latency).
 
@@ -157,7 +163,6 @@ One-time setup: repository **Settings → Pages → Source: GitHub Actions**.
 
 ## 8. Ideas for future work
 
-- "Play the note" mode judged by the mic
 - One-minute chord-change counter, user-defined songs for play-along
 - Latency calibration for rhythm tapping, metronome subdivisions
 - Fingerpicking pattern practice

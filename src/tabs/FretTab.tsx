@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, chooseItem, PlayButton, ScoreBar, Select, useScore, WeakList } from '../components/common';
 import { Fretboard, type Mark } from '../components/Fretboard';
-import { pluckMidi } from '../lib/audio';
+import { ac, pluckMidi } from '../lib/audio';
 import { Log } from '../lib/log';
 import { Metro } from '../lib/metronome';
+import { ensureMic, MIC_FAIL, releaseMic } from '../lib/mic';
+import { createStableNote, detectPitch, noteFromFreq } from '../lib/pitch';
 import { Stats } from '../lib/stats';
 import { useShared } from '../lib/store';
 import { mod12, NOTE, noteAt, noteLabel, OPEN_TOP, SCALES, sharp, type Pos } from '../lib/theory';
@@ -12,7 +14,7 @@ export const playPos = (p: Pos): void => pluckMidi(OPEN_TOP[p.s] + p.f, null, 0.
 const fretName = (f: number): string => (f === 0 ? '開放' : f + 'フレット');
 
 interface Question extends Pos { n: string }
-type Mode = 'name' | 'find';
+type Mode = 'name' | 'find' | 'play';
 
 // ---------- 指板の音名クイズ ----------
 function FretQuiz() {
@@ -27,7 +29,7 @@ function FretQuiz() {
         const n = noteAt(s, f);
         if (natural && n.includes('#')) continue;
         // 直前と同じ問題は出さない
-        if (prev && prev.s === s && (mode === 'find' ? prev.n === n : prev.f === f)) continue;
+        if (prev && prev.s === s && (mode === 'name' ? prev.f === f : prev.n === n)) continue;
         all.push({ s, f, n });
       }
     // 苦手な弦・苦手な音名ほど出やすくする
@@ -52,7 +54,7 @@ function FretQuiz() {
     Stats.record('fretS', q.s, ok);
     Stats.record('fretN', q.n, ok);
     setRes({ ok, ...r });
-    timer.current = setTimeout(next, ok ? 650 : 1600);
+    timer.current = setTimeout(next, ok ? (mode === 'play' ? 1200 : 650) : mode === 'play' ? 2600 : 1600);
   };
   const answerName = (n: string): void => {
     if (res) return;
@@ -66,6 +68,62 @@ function FretQuiz() {
   };
 
   const answers = Array.from({ length: range + 1 }, (_, f) => f).filter((f) => noteAt(q.s, f) === q.n);
+
+  // ---- 弾いて答える：マイクで聞き取った音が、出題した音と同じ高さなら正解 ----
+  const [micOn, setMicOn] = useState(false);
+  const [micMsg, setMicMsg] = useState('');
+  const [heard, setHeard] = useState<number | null>(null);
+  const an = useRef<AnalyserNode | null>(null);
+  const live = useRef({ q, res, answers, finish });
+  live.current = { q, res, answers, finish };
+  const listening = mode === 'play' && micOn;
+  useEffect(() => {
+    if (!listening || !an.current) return;
+    const analyser = an.current;
+    const buf = new Float32Array(analyser.fftSize);
+    const stable = createStableNote(3);
+    let raf = 0;
+    let last = 0;
+    const loop = (t: number): void => {
+      if (t - last > 90) {
+        last = t;
+        analyser.getFloatTimeDomainData(buf);
+        const midi = stable.feed(noteFromFreq(detectPitch(buf.subarray(0, 3072), ac().sampleRate)));
+        if (midi !== null) {
+          setHeard(midi);
+          const c = live.current;
+          const f = midi - OPEN_TOP[c.q.s];
+          if (!c.res && c.answers.includes(f)) {
+            stable.reset();
+            c.finish(true, { hit: { s: c.q.s, f } });
+          }
+        }
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(raf);
+      releaseMic('fretquiz');
+      setHeard(null);
+    };
+  }, [listening]);
+  const micToggle = async (): Promise<void> => {
+    if (micOn) {
+      setMicOn(false);
+      return;
+    }
+    try {
+      an.current = await ensureMic('fretquiz');
+      setMicMsg('');
+      setMicOn(true);
+    } catch {
+      setMicMsg(MIC_FAIL);
+    }
+  };
+  const giveUp = (): void => {
+    if (!res) finish(false, {});
+  };
   const lbl = sharp(q.n);
   let marks: Mark[] = [];
   let text: React.ReactNode;
@@ -75,7 +133,7 @@ function FretQuiz() {
   } else if (!res) {
     text = (
       <>
-        <b>{q.s + 1}弦</b> の <b style={{ color: 'var(--accent)' }}>{noteLabel(q.n)}</b> をタップ（0〜{range}フレット）
+        <b>{q.s + 1}弦</b> の <b style={{ color: 'var(--accent)' }}>{noteLabel(q.n)}</b> を{mode === 'play' ? 'ギターで弾こう' : 'タップ'}（0〜{range}フレット）
       </>
     );
   } else if (res.ok && res.hit) {
@@ -86,14 +144,36 @@ function FretQuiz() {
     const hit = res.hit;
     marks = [{ ...hit, fill: 'var(--ng)', label: sharp(noteAt(hit.s, hit.f)), text: '#fff' }, ...answers.map((f) => ({ s: q.s, f, fill: 'var(--ok)', label: lbl }))];
     text = `そこは ${sharp(noteAt(hit.s, hit.f))}。正解は ${answers.map(fretName).join(' / ')}`;
+  } else {
+    // 「わからない」を押した：答えの場所を見せる
+    marks = answers.map((f) => ({ s: q.s, f, fill: 'var(--ok)', label: lbl }));
+    text = `${q.s + 1}弦の ${noteLabel(q.n)} は ${answers.map(fretName).join(' / ')}`;
   }
+  const heardName = heard === null ? '—' : sharp(NOTE[heard % 12]) + (Math.floor(heard / 12) - 1);
   const list = natural ? ['C', 'D', 'E', 'F', 'G', 'A', 'B'] : [...NOTE];
   return (
     <div className="card wide">
       <h2>指板の音名クイズ</h2>
       <ScoreBar score={score} testId="fret-score" />
-      <div className="qtext" data-testid="fret-q" data-answer={mode === 'name' ? q.n : `${q.s}-${answers[0]}`}>{text}</div>
+      <div className="qtext" data-testid="fret-q" data-answer={mode === 'name' ? q.n : `${q.s}-${answers[0]}`} data-result={res ? (res.ok ? 'ok' : 'ng') : ''}>{text}</div>
       <Fretboard marks={marks} onHit={answerPos} testId="fret-board" />
+      {mode === 'play' && (
+        <div className="playmode">
+          <div className="row">
+            <button className={`primary${micOn ? ' on' : ''}`} onClick={() => void micToggle()} data-testid="fret-mic">
+              {micOn ? '■ マイクをオフ' : '🎤 マイクをオン'}
+            </button>
+            <span className="muted">
+              聞こえている音：<b data-testid="fret-heard">{heardName}</b>
+            </span>
+            <span className="grow" />
+            <button onClick={giveUp} data-testid="fret-giveup">わからない</button>
+          </div>
+          <p className="muted" style={{ margin: '8px 0 0' }}>
+            {micMsg || '単音をはっきり鳴らしてください。チューニングがずれていると判定されにくいので、先にチューナーで合わせましょう。'}
+          </p>
+        </div>
+      )}
       {mode === 'name' && (
         <div className="answers" data-testid="fret-answers">
           {list.map((n) => (
@@ -104,7 +184,7 @@ function FretQuiz() {
         </div>
       )}
       <div className="row" style={{ marginTop: 12 }}>
-        <Select value={mode} onChange={setMode} options={[['name', '音名を答える'], ['find', '場所を探す']]} testId="fret-mode" />
+        <Select value={mode} onChange={setMode} options={[['name', '音名を答える'], ['find', '場所を探す'], ['play', '弾いて答える（マイク）']]} testId="fret-mode" />
         <Select value={range} onChange={setRange} options={[[5, '0〜5フレット'], [12, '0〜12フレット']]} />
         <Check checked={natural} onChange={setNatural}>♯/♭なし</Check>
         <span className="grow" />

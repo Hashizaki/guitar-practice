@@ -2,6 +2,8 @@
 import { ac, IS_IOS, setAudioSession } from './audio';
 import { keepAwake } from './wake';
 
+export { detectPitch, freqToNote } from './pitch';
+
 export const MIC_FAIL = IS_IOS
   ? 'マイクが使えませんでした。iPhone / iPad では「設定 → Safari → マイク」で許可し、https のページ（GitHub Pages など）で開いてください。'
   : 'マイクが使えませんでした。ブラウザのマイク許可を確認し、https のページか localhost で開いてください。';
@@ -38,45 +40,6 @@ export function releaseMic(user: string): void {
     setAudioSession('playback');
   }
   keepAwake('mic', users.size > 0);
-}
-
-/** 自己相関でピッチ（Hz）を求める。無音や検出不能なら -1 */
-export function detectPitch(buf: Float32Array, sr: number): number {
-  let rms = 0;
-  for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
-  if (Math.sqrt(rms / buf.length) < 0.01) return -1;
-  const minLag = Math.floor(sr / 1000);
-  const maxLag = Math.floor(sr / 65);
-  const n = buf.length - maxLag - 1;
-  const corr = new Float32Array(maxLag + 2);
-  for (let lag = minLag; lag <= maxLag + 1; lag++) {
-    let s = 0;
-    for (let j = 0; j < n; j++) s += buf[j] * buf[j + lag];
-    corr[lag] = s;
-  }
-  // 最初に十分高いピークを採用（オクターブ誤検出を防ぐ）
-  let maxAll = 0;
-  for (let l = minLag; l <= maxLag; l++) if (corr[l] > maxAll) maxAll = corr[l];
-  let best = -1;
-  for (let l = minLag + 1; l <= maxLag; l++) {
-    if (corr[l] > corr[l - 1] && corr[l] >= corr[l + 1] && corr[l] > 0.85 * maxAll) {
-      best = l;
-      break;
-    }
-  }
-  if (best < 0) return -1;
-  const a = corr[best - 1];
-  const b = corr[best];
-  const c2 = corr[best + 1];
-  const shift = (a - c2) / (2 * (a - 2 * b + c2) || 1);
-  return sr / (best + shift);
-}
-
-/** Hz → MIDI 番号（小数）と、いちばん近い音からのズレ（セント） */
-export function freqToNote(f: number): { midi: number; nearest: number; cents: number } {
-  const midi = 69 + 12 * Math.log2(f / 440);
-  const nearest = Math.round(midi);
-  return { midi, nearest, cents: Math.round((midi - nearest) * 100) };
 }
 
 /** FFT から12音のクロマ（どの音名がどれだけ鳴っているか）を作る。smooth は前回値で、呼ぶたびに更新される */
