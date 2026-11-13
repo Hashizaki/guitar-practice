@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChordDiagram } from '../components/ChordDiagram';
-import { Check, Dots, ScoreBar, Select, useScore } from '../components/common';
+import { Check, chooseItem, Dots, ScoreBar, Select, useScore, WeakList } from '../components/common';
 import { ac, pluckMidi, strum } from '../lib/audio';
 import { Log, type LogKind } from '../lib/log';
 import { Metro, useMetro } from '../lib/metronome';
 import { tapOffsetMs } from '../lib/rhythm';
 import type { TrainMode } from '../lib/nav';
+import { Stats } from '../lib/stats';
 import { useShared } from '../lib/store';
-import { CHORD_NAMES, chordFrets, chordPcs, NOTE, pick, rnd, sharp, shuffle } from '../lib/theory';
+import { CHORD_NAMES, chordFrets, chordPcs, NOTE, rnd, sharp, shuffle } from '../lib/theory';
 import { useSelectedChords } from './ChordTab';
 
 const pcLabel = (m: number): string => sharp(NOTE[((m % 12) + 12) % 12]);
@@ -28,6 +29,8 @@ interface ChoiceQuizProps<Q extends { answer: string }> {
   idle: string;
   delay?: [ok: number, ng: number];
   log?: LogKind;
+  /** 項目ごとの正誤を記録する名前と、苦手一覧での表示名 */
+  stat?: { group: string; label: (item: string) => string };
   onAnswered?: (q: Q) => void;
   /** 問題の上に表示するもの（コード図など） */
   top?: (q: Q) => ReactNode;
@@ -76,6 +79,7 @@ function ChoiceQuiz<Q extends { answer: string }>(p: ChoiceQuizProps<Q>) {
     const ok = v === q.answer;
     record(ok);
     if (p.log) Log.count(p.log);
+    if (p.stat) Stats.record(p.stat.group, q.answer, ok);
     setPicked(v);
     p.onAnswered?.(q);
     const [dOk, dNg] = p.delay ?? [1300, 2400];
@@ -105,6 +109,7 @@ function ChoiceQuiz<Q extends { answer: string }>(p: ChoiceQuizProps<Q>) {
         <span className="grow" />
         <button onClick={() => next(q)}>{p.play ? '次の問題' : 'スキップ'}</button>
       </div>
+      {p.stat && <WeakList testId={`${p.testId}-weak`} groups={[p.stat]} />}
       {p.footer}
     </div>
   );
@@ -134,6 +139,7 @@ function IntervalQuiz() {
       scoreKey="iv"
       title="音程当て（インターバル）"
       log="ear"
+      stat={{ group: 'iv', label: (i) => INTERVALS.find((x) => String(x.v) === i)?.label ?? i }}
       delay={[2300, 3300]}
       small
       resetKey={level}
@@ -141,9 +147,9 @@ function IntervalQuiz() {
       prompt="音程は？（「▶ 聞く」でもう一度）"
       choices={() => INTERVALS.filter((x) => pool.includes(x.v)).map((x) => ({ v: String(x.v), label: x.label }))}
       make={(prev) => {
-        let iv: number;
-        do iv = pick(pool);
-        while (prev && String(iv) === prev.answer && pool.length > 2 && Math.random() < 0.7);
+        // 直前と同じ音程はなるべく続けない。苦手な音程ほど出やすい
+        const cands = prev && pool.length > 2 && Math.random() < 0.7 ? pool.filter((x) => String(x) !== prev.answer) : pool;
+        const iv = chooseItem(cands, (x) => Stats.weight('iv', x));
         const low = 45 + rnd(12); // A2〜G#3 を基準に
         return { answer: String(iv), a: dir === 'down' ? low + iv : low, b: dir === 'down' ? low : low + iv, harm: dir === 'harm' };
       }}
@@ -197,6 +203,7 @@ function ChordEarQuiz() {
       scoreKey="ce"
       title="コード当て（響きの聞き分け）"
       log="ear"
+      stat={{ group: 'ce', label: (i) => CTYPES.find((x) => x.v === i)?.label ?? i }}
       delay={[2500, 3500]}
       small
       resetKey={String(level)}
@@ -204,7 +211,7 @@ function ChordEarQuiz() {
       prompt="このコードの種類は？"
       choices={() => pool.map((c) => ({ v: c.v, label: c.label }))}
       make={() => {
-        const c = pick(pool);
+        const c = chooseItem(pool, (x) => Stats.weight('ce', x.v));
         const root = 40 + rnd(12);
         // ギターらしいボイシング：ルート＋1オクターブ上に構成音を重ねる
         const notes = [...new Set([root, ...(c.v === 'dim' ? [] : [root + 7]), ...c.iv.map((i) => root + 12 + i), root + 24])].sort((a, b) => a - b);
@@ -235,15 +242,15 @@ function FormQuiz() {
       scoreKey="fm"
       title="フォーム当て（コードの形を覚える）"
       autoStart
+      stat={{ group: 'fm', label: (i) => i }}
       resetKey={poolKind}
       idle=""
       prompt="このコードの名前は？"
       choices={(q) => (q ? q.opts.map((n) => ({ v: n, label: n })) : [])}
       make={(prev) => {
         const pool = poolKind === 'sel' && selected.length >= 2 ? selected : CHORD_NAMES;
-        let name: string;
-        do name = pick(pool);
-        while (prev && name === prev.answer && pool.length > 1);
+        const cands = prev && pool.length > 1 ? pool.filter((n) => n !== prev.answer) : pool;
+        const name = chooseItem(cands, (n) => Stats.weight('fm', n));
         // 選択肢：正解＋同じルートの紛らわしいものを優先
         const similar = shuffle(CHORD_NAMES.filter((n) => n !== name && n[0] === name[0])).slice(0, 2);
         const others = shuffle(CHORD_NAMES.filter((n) => n !== name && !similar.includes(n)));

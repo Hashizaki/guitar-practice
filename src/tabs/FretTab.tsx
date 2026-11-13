@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, PlayButton, ScoreBar, Select, useScore } from '../components/common';
+import { Check, chooseItem, PlayButton, ScoreBar, Select, useScore, WeakList } from '../components/common';
 import { Fretboard, type Mark } from '../components/Fretboard';
 import { pluckMidi } from '../lib/audio';
 import { Log } from '../lib/log';
 import { Metro } from '../lib/metronome';
+import { Stats } from '../lib/stats';
 import { useShared } from '../lib/store';
-import { mod12, NOTE, noteAt, noteLabel, OPEN_TOP, rnd, SCALES, sharp, type Pos } from '../lib/theory';
+import { mod12, NOTE, noteAt, noteLabel, OPEN_TOP, SCALES, sharp, type Pos } from '../lib/theory';
 
 export const playPos = (p: Pos): void => pluckMidi(OPEN_TOP[p.s] + p.f, null, 0.5);
 const fretName = (f: number): string => (f === 0 ? '開放' : f + 'フレット');
@@ -20,15 +21,17 @@ function FretQuiz() {
   const [natural, setNatural] = useShared('qNatural', true);
   const [score, record] = useScore('fret');
   const make = (prev: Question | null): Question => {
-    let q: Question;
-    let guard = 0;
-    do {
-      const s = rnd(6);
-      const f = rnd(range + 1);
-      q = { s, f, n: noteAt(s, f) };
-      guard++;
-    } while (((natural && q.n.includes('#')) || (prev && prev.s === q.s && (mode === 'find' ? prev.n === q.n : prev.f === q.f))) && guard < 200);
-    return q;
+    const all: Question[] = [];
+    for (let s = 0; s < 6; s++)
+      for (let f = 0; f <= range; f++) {
+        const n = noteAt(s, f);
+        if (natural && n.includes('#')) continue;
+        // 直前と同じ問題は出さない
+        if (prev && prev.s === s && (mode === 'find' ? prev.n === n : prev.f === f)) continue;
+        all.push({ s, f, n });
+      }
+    // 苦手な弦・苦手な音名ほど出やすくする
+    return chooseItem(all, (c) => Stats.weight('fretS', c.s) * Stats.weight('fretN', c.n));
   };
   const [q, setQ] = useState<Question>(() => make(null));
   // 回答後の表示：picked は選んだ音名（音名モード）、hit はタップした位置（場所モード）
@@ -46,6 +49,8 @@ function FretQuiz() {
   const finish = (ok: boolean, r: { picked?: string; hit?: Pos }): void => {
     record(ok);
     Log.count('fret');
+    Stats.record('fretS', q.s, ok);
+    Stats.record('fretN', q.n, ok);
     setRes({ ok, ...r });
     timer.current = setTimeout(next, ok ? 650 : 1600);
   };
@@ -105,6 +110,7 @@ function FretQuiz() {
         <span className="grow" />
         <button onClick={next}>スキップ</button>
       </div>
+      <WeakList testId="fret-weak" groups={[{ group: 'fretS', label: (i) => `${Number(i) + 1}弦` }, { group: 'fretN', label: sharp }]} />
     </div>
   );
 }

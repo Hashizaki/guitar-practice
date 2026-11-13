@@ -278,3 +278,8 @@ input[type=search]{width:100%;font-family:inherit;font-size:16px;background:var(
 .sethead{font-size:14px;margin:16px 0 6px;color:var(--text)}
 button.danger{color:var(--ng);border-color:var(--ng);background:none}
 @media (min-width:760px){ #settingsCard{max-width:780px;width:100%;justify-self:center} }
+
+/* 苦手の一覧 */
+.weak{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:13px}
+.weak b{display:inline-block;margin:0 4px;padding:2px 8px;border-radius:999px;border:1px solid var(--ng);color:var(--text);font-size:12px}
+.weak b small{margin-left:4px;color:var(--ng);font-weight:400}

@@ -47,6 +47,7 @@ src/
     seq.ts              One-at-a-time sequencer for demos and backing loops + useSeqActive() hook
     mic.ts              Shared mic stream, pitch detection (autocorrelation), chroma analysis
     rhythm.ts           Tap-to-grid offset maths (pure, unit-tested)
+    stats.ts            Per-item quiz results, weighted question choice, weak-spot list (unit-tested)
     backup.ts           Backup export / import / erase over a Storage-like object (pure, unit-tested)
     log.ts              Practice log + useLogVersion() hook
     store.ts            localStorage wrapper, useShared() (persisted state shared between components)
@@ -107,6 +108,13 @@ tests/                  Playwright end-to-end tests (iPhone 13 and iPad Pro 11 v
 - Chord check: 12-bin chroma from FFT peaks (75–1500 Hz, ±35 cents), smoothed 0.55/0.45. A chord tone below
   0.22 is "missing"; a non-chord tone above 0.6 is "extra". **These thresholds have not been tuned on a real guitar.**
 
+### Weak spots
+- `Stats.record(group, item, ok)` keeps `[right, wrong]` per item with a 0.9 decay per answer, so recent results
+  count more (stored as `gtr_stats`). Groups: `fretS` (string), `fretN` (note), `iv`, `ce`, `fm`.
+- `chooseItem(pool, weightOf)` picks a question with probability proportional to `Stats.weight` (1 for mastered,
+  up to 5 for always wrong, 1.5 for never asked) when the shared `weakMode` setting is on, uniformly otherwise.
+- `<WeakList>` under each quiz shows the weakest items (≥ 2 answers, accuracy < 80%) and the on/off switch.
+
 ### Settings and backup
 - `src/tabs/Settings.tsx`: `useTheme`, `useZoom`, `useLefty` (all `useShared`). `useApplyDisplay()` (called once in
   `App`) sets `data-theme` on `<html>` and the `--zoom` CSS variable (`header, main { zoom: var(--zoom) }`).
@@ -149,7 +157,6 @@ One-time setup: repository **Settings → Pages → Source: GitHub Actions**.
 
 ## 8. Ideas for future work
 
-- Track weak spots in the quizzes and ask them more often
 - "Play the note" mode judged by the mic
 - One-minute chord-change counter, user-defined songs for play-along
 - Latency calibration for rhythm tapping, metronome subdivisions

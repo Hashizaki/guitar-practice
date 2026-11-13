@@ -1,7 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Metro, useMetro } from '../lib/metronome';
 import { Seq, useSeqActive, type SeqOptions } from '../lib/seq';
-import { Store } from '../lib/store';
+import { Stats, pickWeighted, useStatsVersion, weakest } from '../lib/stats';
+import { getShared, Store, useShared } from '../lib/store';
+import { pick } from '../lib/theory';
 
 /** メトロノームの拍を示す丸 */
 export function Dots() {
@@ -85,3 +87,28 @@ export function Check({ checked, onChange, children, testId }: { checked: boolea
 export const C_ROOT = '#e2683c';
 export const C_TONE = '#f0a33a';
 export const C_HIT = '#6cc48a';
+
+// ---------- 苦手の記録 ----------
+export const useWeakMode = () => useShared('weakMode', true);
+/** 問題を選ぶ。「苦手を多めに出す」がオンなら、間違いの多いものほど選ばれやすい */
+export function chooseItem<T>(pool: readonly T[], weightOf: (item: T) => number): T {
+  return getShared('weakMode', true) ? pickWeighted(pool, weightOf) : pick(pool);
+}
+export interface WeakGroup { group: string; label: (item: string) => string }
+/** クイズの下に出す「苦手なところ」の一覧と、重点出題の切り替え */
+export function WeakList({ groups, testId }: { groups: WeakGroup[]; testId?: string }) {
+  useStatsVersion();
+  const [on, setOn] = useWeakMode();
+  const items = groups
+    .flatMap((g) => weakest(Stats.group(g.group)).map((x) => ({ name: g.label(x.item), acc: x.acc })))
+    .sort((a, b) => a.acc - b.acc)
+    .slice(0, 4);
+  return (
+    <div className="weak" data-testid={testId}>
+      <Check checked={on} onChange={setOn}>苦手を多めに出す</Check>
+      <span className="muted" data-testid={testId && `${testId}-list`}>
+        {items.length ? <>苦手：{items.map((x, i) => <b key={i}>{x.name}<small>{Math.round(x.acc * 100)}%</small></b>)}</> : 'まちがえた問題は、ここに「苦手」として記録されます。'}
+      </span>
+    </div>
+  );
+}
