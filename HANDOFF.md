@@ -148,8 +148,21 @@ tests/                  Playwright end-to-end tests (iPhone 13 and iPad Pro 11 v
 - Backup file: `{app: "guitar-practice", version: 1, exportedAt, data}` where `data` holds every `gtr_*` key
   without the prefix. Import replaces all current data and reloads the page so the singletons pick it up.
 
+### Analytics
+- `src/lib/analytics.ts` loads Google Tag Manager (`GTM-TPFVMS5R`) with the official snippet logic, only when all
+  of these hold: production build, hostname is not localhost / 127.0.0.1, not an automated browser
+  (`navigator.webdriver`), and the user has not ticked "アクセス解析を送らない" in Settings (`gtr_analyticsOptOut`).
+- Events pushed to `dataLayer`: `tab_view {tab_name}` (from `gotoTab`) and `lesson_complete {lesson_id}`.
+  To see them in GA4, add a GA4 tag plus custom-event triggers for these names in the GTM container.
+  Practice-log contents, backups and mic audio are never sent.
+- Opting out after GTM loaded reloads the page (a loaded tag cannot be removed); opting back in loads it at once.
+- Tests: `tests/analytics.spec.ts` checks it stays off on localhost, and opens the build as `guitar.test`
+  (mapped to 127.0.0.1 in `playwright.config.ts`) to check it loads, sends events and respects the opt-out.
+  Requests to googletagmanager.com are intercepted, so tests never contact Google.
+
 ### Offline
-- `public/sw.js`: network-first for the page, cache-first for everything else. Because Vite's asset names change
+- `public/sw.js`: only same-origin GET requests are handled (analytics and other external requests pass through
+  untouched): network-first for the page, cache-first for everything else. Because Vite's asset names change
   per build, the page sends the service worker the list of files it loaded so the first visit is cached too.
 
 ## 5. Testing

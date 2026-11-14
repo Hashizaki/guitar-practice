@@ -3,6 +3,7 @@ import { Select } from '../components/common';
 import { LESSONS } from '../lessons';
 import { GLOSSARY } from '../lessons/glossary';
 import type { Lesson, QuizQ } from '../lessons/types';
+import { track } from '../lib/analytics';
 import { dayKey, fmtMin, Log, useLogVersion, type LogKind } from '../lib/log';
 import { gotoTab, gotoTrain } from '../lib/nav';
 import { Seq } from '../lib/seq';
@@ -186,6 +187,7 @@ function LessonView({ index, open, close }: { index: number; open: (i: number) =
   const finish = (): void => {
     if (!done.includes(lesson.id)) setDone([...done, lesson.id]);
     Log.count('lesson');
+    track('lesson_complete', { lesson_id: lesson.id });
     setCleared(true);
   };
   const { Body } = lesson;
