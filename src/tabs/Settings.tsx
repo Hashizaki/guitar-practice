@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Select } from '../components/common';
 import { IS_IOS } from '../lib/audio';
 import { backupFileName, clearAll, collectBackup, parseBackup, restoreBackup } from '../lib/backup';
+import { analyticsLoaded, initAnalytics, OPT_OUT_STORE_KEY } from '../lib/analytics';
 import { useShared } from '../lib/store';
 
 export type Theme = 'dark' | 'light' | 'auto';
@@ -40,6 +41,7 @@ export function SettingsCard() {
   const [theme, setTheme] = useTheme();
   const [zoom, setZoom] = useZoom();
   const [lefty, setLefty] = useLefty();
+  const [optOut, setOptOut] = useShared(OPT_OUT_STORE_KEY, false);
   const [msg, setMsg] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -90,6 +92,22 @@ export function SettingsCard() {
         </label>
         <Check checked={lefty} onChange={setLefty} testId="set-lefty">左利き用の表示（指板とコード図を左右反転）</Check>
       </div>
+      <h3 className="sethead">アクセス解析</h3>
+      <p className="muted" style={{ margin: '0 0 8px' }}>
+        アプリの改善のため、Google アナリティクス（Google タグマネージャー経由）で、ページの表示や使った機能、端末・ブラウザの種類などを集計しています。練習記録・バックアップの中身・マイクの音声は送りません。
+      </p>
+      <Check
+        checked={optOut}
+        onChange={(v) => {
+          setOptOut(v);
+          // 一度読み込んだ解析は止められないので、ページを読み込み直して反映する
+          if (v && analyticsLoaded()) location.reload();
+          if (!v) initAnalytics();
+        }}
+        testId="set-optout"
+      >
+        アクセス解析を送らない
+      </Check>
       <h3 className="sethead">バックアップ</h3>
       <p className="muted" style={{ margin: '0 0 8px' }}>
         練習記録やレッスンの進み具合は、このブラウザの中だけに保存されています。機種変更の前や、念のための控えとして、ファイルに書き出しておけます。

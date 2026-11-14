@@ -1,7 +1,7 @@
 // オフライン対応用 Service Worker
 // 使い方を変えたときは VERSION を上げると古いキャッシュが消えます。
 // （JS/CSS はビルドごとにファイル名が変わるので、普段は上げなくても更新されます）
-const VERSION = 'gtr-v7';
+const VERSION = 'gtr-v8';
 // サーバーが Vary ヘッダーを付けていても、同じ URL ならキャッシュを使う
 const ANY = { ignoreVary: true };
 const CORE = ['./', 'index.html', 'manifest.webmanifest',
@@ -25,7 +25,8 @@ self.addEventListener('message', e => {
 });
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET') return;
+  // 自分のサイトのファイルだけを扱う（アクセス解析など外部への通信はそのまま通す）
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   // ページ本体：ネット優先（更新をすぐ反映）、オフライン時はキャッシュ
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).then(res => {

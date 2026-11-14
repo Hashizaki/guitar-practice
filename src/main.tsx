@@ -1,9 +1,13 @@
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { initAnalytics } from './lib/analytics';
 import './styles.css';
 
 // StrictMode は使わない：開発時に effect が2回走り、マイクや再生などの後始末と相性が悪いため
 createRoot(document.getElementById('root') as HTMLElement).render(<App />);
+
+// アクセス解析（公開サイトのみ。設定で止められる）
+initAnalytics();
 
 // オフライン対応（https か localhost のときだけ）
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') && import.meta.env.PROD) {

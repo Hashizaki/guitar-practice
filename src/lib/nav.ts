@@ -1,3 +1,4 @@
+import { track } from './analytics';
 import { Seq } from './seq';
 import { setShared, useShared } from './store';
 
@@ -8,6 +9,7 @@ export type TrainMode = 'interval' | 'chordear' | 'rhythm' | 'form';
 export function gotoTab(name: TabName): void {
   Seq.stop();
   setShared('tab', name);
+  track('tab_view', { tab_name: name });
   window.scrollTo(0, 0);
 }
 export const useTab = (): TabName => useShared<TabName>('tab', 'learn')[0];

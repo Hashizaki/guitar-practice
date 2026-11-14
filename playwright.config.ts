@@ -55,6 +55,8 @@ export default defineConfig({
         '--use-fake-ui-for-media-stream',
         '--use-fake-device-for-media-stream',
         `--use-file-for-fake-audio-capture=${MIC_FILE}`,
+        // アクセス解析のテスト用：localhost 以外のホスト名（公開サイトの代わり）で手元のサーバーを開けるようにする
+        '--host-resolver-rules=MAP guitar.test 127.0.0.1',
       ],
     },
   },
@@ -62,5 +64,5 @@ export default defineConfig({
     { name: 'iphone', use: { ...devices['iPhone 13'], browserName: 'chromium' } },
     { name: 'ipad', use: { ...devices['iPad Pro 11 landscape'], browserName: 'chromium' } },
   ],
-  webServer: { command: 'npm run preview', url: 'http://localhost:4173', reuseExistingServer: !process.env.CI, timeout: 60_000 },
+  webServer: { command: 'npm run preview -- --host 127.0.0.1', url: 'http://127.0.0.1:4173', reuseExistingServer: !process.env.CI, timeout: 60_000 },
 });
